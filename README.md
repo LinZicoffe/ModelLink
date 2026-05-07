@@ -11,12 +11,14 @@
 ## 功能
 
 - 将第三方模型（DeepSeek、Kimi、智谱 GLM 等）接入 Claude Desktop
-- 支持同时配置多个 API 服务商
+- 支持同时配置多个 API 服务商，每个服务商独立配色标识
 - 支持 1M 上下文模型变体
 - 原生 WPF 界面（HandyControl），无需 WebView 运行时
+- 顶部 Tab 导航（服务商管理 / 系统设置 / 请求日志）
+- 连接测试（延迟检测 + 错误信息提取）
 - SSE 流式转发，零缓冲实时响应
 - 系统托盘常驻，关闭窗口后代理继续运行
-- 连接测试、请求日志（带成功/失败状态指示）
+- 请求日志（成功/失败状态指示 + 统计）
 - 开机自启动
 
 ## 技术栈
@@ -31,35 +33,54 @@
 | 日志 | Serilog + Serilog.Sinks.File |
 | 目标框架 | .NET 8.0 (Windows) |
 
+## 界面设计
+
+采用顶部 Tab 导航布局，自定义标题栏可拖动：
+
+- **顶部栏**：品牌 Logo + Tab 导航（服务商管理 / 系统设置 / 请求日志）+ 运行状态指示
+- **服务商卡片**：顶部彩色条标识，6 色自动循环（橙/蓝/绿/紫/金/青）
+- **模型行**：带图标的输入行，支持 1M 变体开关
+- **空状态**：图标 + 引导文案 + 操作按钮
+- **底部操作栏**：保存配置（幽灵按钮）+ 应用到 Claude Desktop（品牌色主按钮）
+
+设计体系定义在 `Resources/Styles.xaml`：统一色彩、圆角（12/8/6/4 四级）、按钮样式（Primary/Success/Ghost/Small/Icon 五种）。
+
 ## 项目结构
 
 ```
 claude model setting/
-├── Models/                     # 数据模型
-│   ├── AppConfig.cs            # 配置根模型
-│   ├── Provider.cs             # 服务商模型
-│   ├── ModelEntry.cs           # 模型条目
-│   ├── LogEntry.cs             # 请求日志
-│   ├── ModelSlot.cs            # 8 个 Claude 模型槽位
-│   ├── ResolvedModel.cs        # 模型解析结果
-│   └── ApiResponse.cs          # API 响应
-├── ViewModels/                 # 视图模型（MVVM）
-│   ├── MainViewModel.cs        # 主 VM
-│   ├── ProviderViewModel.cs    # 服务商卡片 VM
-│   └── ModelEntryViewModel.cs  # 模型行 VM
-├── Views/                      # 视图
-│   ├── MainWindow.xaml/.cs     # 主窗口
-│   └── Converters/             # 值转换器
-├── Services/                   # 服务层
-│   ├── ConfigService.cs        # JSON 配置读写
-│   ├── ProxyServerService.cs   # Kestrel 代理服务器
-│   ├── ClaudeDesktopService.cs # Claude Desktop 集成
-│   └── ModelResolverService.cs # 模型槽位映射
-├── Helpers/                    # 工具类
-│   ├── FileSystemHelper.cs     # 原子写入
-│   ├── AutoStartHelper.cs      # 注册表自启动
-│   └── TimeHelper.cs           # 时间格式化
-└── Assets/                     # 资源文件
+├── App.xaml / App.xaml.cs        # 入口：DI 容器、Serilog、全局异常处理、代理启动
+├── Models/                       # 数据模型
+│   ├── AppConfig.cs              # 配置根模型（providers 列表）
+│   ├── Provider.cs               # 服务商（target_url, api_key, models[]）
+│   ├── ModelEntry.cs             # 模型条目（name, to_1m）
+│   ├── LogEntry.cs               # 请求日志
+│   ├── ModelSlot.cs              # 8 个 Claude 模型槽位
+│   ├── ResolvedModel.cs          # 解析后的目标模型
+│   └── ApiResponse.cs            # API 响应封装
+├── ViewModels/                   # MVVM ViewModel
+│   ├── MainViewModel.cs          # 主 VM（Tab 导航、配置 CRUD、日志）
+│   ├── ProviderViewModel.cs      # 服务商 VM（连接测试、模型管理、配色）
+│   └── ModelEntryViewModel.cs    # 模型条目 VM（名称、1M 开关）
+├── Views/                        # MVVM View
+│   └── MainWindow.xaml / .cs     # 主窗口（顶部 Tab + 三页内容）
+├── Converters/                   # WPF 值转换器
+│   ├── IndexToVisibilityConverter.cs         # 导航索引 → 页面可见性
+│   ├── InvertedBoolToVisibilityConverter.cs  # 布尔反转 → 可见性
+│   └── CountToVisibilityConverter.cs         # 集合计数 → 可见性（支持 Invert）
+├── Services/                     # 服务层（接口 + 实现）
+│   ├── IConfigService / ConfigService            # JSON 配置读写（原子写入 + 锁）
+│   ├── IModelResolverService / ModelResolverService  # 模型槽位映射
+│   ├── IProxyServerService / ProxyServerService      # Kestrel 代理服务器
+│   └── IClaudeDesktopService / ClaudeDesktopService  # Claude Desktop 配置 + 重启
+├── Resources/                    # XAML 资源
+│   └── Styles.xaml               # 设计体系（色彩、圆角、按钮、卡片、排版）
+├── Helpers/                      # 工具类
+│   ├── FileSystemHelper.cs       # 原子写入（临时文件 + 重命名）
+│   ├── AutoStartHelper.cs        # 注册表开机自启动
+│   └── TimeHelper.cs             # 时间格式化
+└── Assets/                       # 资源文件
+    └── tray_icon.ico             # 系统托盘图标
 ```
 
 ## 构建与运行
@@ -89,12 +110,12 @@ dotnet run
 ### 第二步：配置 ModelLink
 
 1. 运行 ModelLink
-2. 点击「+ 添加服务商」
+2. 点击「添加服务商」
 3. 填写第三方 API 信息：
    - **API 地址**：如 `https://api.deepseek.com/anthropic`
    - **API 密钥**：第三方平台申请的 API Key
 4. 点击「+ 添加模型」，填写模型名称
-5. 点击「测试连接」验证
+5. 点击「测试连接」验证（显示延迟和错误详情）
 6. 点击「保存配置」
 7. 点击「应用到 Claude Desktop」
 
@@ -105,7 +126,7 @@ dotnet run
 ## 工作原理
 
 ```
-Claude Desktop → http://127.0.0.1:5678 (本代理) → 第三方 API
+Claude Desktop → http://127.0.0.1:5678 (本地代理) → 第三方 API
 ```
 
 1. Claude Desktop 的所有 API 请求发送到本地代理（端口 5678）
@@ -127,6 +148,7 @@ Claude Desktop → http://127.0.0.1:5678 (本代理) → 第三方 API
 | 项目 | Rust 原版 | C# WPF 版 |
 |------|-----------|-----------|
 | UI | WRY/WebView + HTML | WPF + HandyControl |
+| 导航 | 左侧边栏 | 顶部 Tab 导航 |
 | HTTP 服务器 | Axum | ASP.NET Core Kestrel |
 | HTTP 客户端 | reqwest | HttpClient |
 | JSON | serde | System.Text.Json |

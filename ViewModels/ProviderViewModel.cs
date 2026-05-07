@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Net.Http;
+using System.Windows.Media;
 using claude_model_setting.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,6 +12,16 @@ namespace claude_model_setting.ViewModels;
 /// </summary>
 public sealed partial class ProviderViewModel : ObservableObject
 {
+    private static readonly Brush[] AccentBrushes =
+    [
+        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D97757")),
+        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1890FF")),
+        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#52C41A")),
+        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#722ED1")),
+        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FAAD14")),
+        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#13C2C2")),
+    ];
+
     [ObservableProperty]
     private string _targetUrl = string.Empty;
 
@@ -26,10 +37,16 @@ public sealed partial class ProviderViewModel : ObservableObject
     [ObservableProperty]
     private int _index;
 
+    [ObservableProperty]
+    private bool _isKeyVisible;
+
     public ObservableCollection<ModelEntryViewModel> Models { get; } = [];
+
+    public Brush AccentBrush => AccentBrushes[Index % AccentBrushes.Length];
 
     public string DisplayTitle => $"服务商 {Index + 1}";
     public bool HasTestResult => !string.IsNullOrEmpty(TestResult);
+    public bool IsTestSuccess => TestResult.StartsWith("连接成功");
 
     public ProviderViewModel() { }
 
@@ -41,6 +58,12 @@ public sealed partial class ProviderViewModel : ObservableObject
         {
             Models.Add(new ModelEntryViewModel(m));
         }
+    }
+
+    partial void OnIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(AccentBrush));
+        OnPropertyChanged(nameof(DisplayTitle));
     }
 
     /// <summary>
@@ -97,11 +120,13 @@ public sealed partial class ProviderViewModel : ObservableObject
             req.Headers.Add("authorization", $"Bearer {ApiKey}");
             req.Headers.Add("anthropic-version", "2023-06-01");
 
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             using var resp = await client.SendAsync(req);
+            sw.Stop();
 
             if (resp.IsSuccessStatusCode)
             {
-                TestResult = $"连接成功 (HTTP {(int)resp.StatusCode})";
+                TestResult = $"连接成功 (延迟: {sw.ElapsedMilliseconds}ms)";
             }
             else
             {
@@ -126,6 +151,7 @@ public sealed partial class ProviderViewModel : ObservableObject
         {
             IsTesting = false;
             OnPropertyChanged(nameof(HasTestResult));
+            OnPropertyChanged(nameof(IsTestSuccess));
         }
     }
 

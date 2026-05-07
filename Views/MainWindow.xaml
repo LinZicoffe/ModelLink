@@ -4,17 +4,23 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:hc="https://handyorg.github.io/handycontrol"
-        xmlns:local="clr-namespace:claude_model_setting.Views"
         xmlns:vm="clr-namespace:claude_model_setting.ViewModels"
+        xmlns:cvt="clr-namespace:claude_model_setting.Converters"
         mc:Ignorable="d"
-        Title="ModelLink" Height="760" Width="860"
+        Title="ModelLink" Height="720" Width="960"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanMinimize">
+        ResizeMode="CanMinimize"
+        Background="#F8FAFC"
+        NonClientAreaContent="{x:Null}">
 
     <hc:Window.Resources>
         <ResourceDictionary>
-            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-            <local:IndexToVisibilityConverter x:Key="IndexToVisibilityConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <cvt:InvertedBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+            <cvt:CountToVisibilityConverter x:Key="CountToVis"/>
         </ResourceDictionary>
     </hc:Window.Resources>
 
@@ -35,200 +41,417 @@
             </hc:Interaction.Triggers>
         </hc:NotifyIcon>
 
-        <!-- Growl 消息通过代码调用 HandyControl.Controls.Growl 自动显示 -->
+        <!-- ===== 顶部导航栏（标题 + Tab + 状态） ===== -->
+        <Border DockPanel.Dock="Top" Background="#FFFFFF" Padding="0,0,0,0">
+            <Border.Clip>
+                <RectangleGeometry RadiusX="0" RadiusY="0">
+                    <RectangleGeometry.Rect>
+                        <Rect X="0" Y="0" Width="2000" Height="200"/>
+                    </RectangleGeometry.Rect>
+                </RectangleGeometry>
+            </Border.Clip>
 
-        <!-- 顶部标题栏 -->
-        <Border DockPanel.Dock="Top" Padding="24,12" Margin="0,0,0,1"
-                Background="{DynamicResource RegionBrush}">
-            <DockPanel>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="ModelLink" FontSize="22" FontWeight="Bold" Foreground="#D97757"/>
-                    <Ellipse Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" Margin="16,0,6,0"
-                             VerticalAlignment="Center"/>
-                    <TextBlock Text="运行中" FontSize="12" Opacity="0.6" VerticalAlignment="Center"/>
-                </StackPanel>
-                <Button DockPanel.Dock="Right" Content="&#x2699;" FontSize="18" Opacity="0.5"
-                        BorderThickness="0" Background="Transparent" Cursor="Hand"
-                        Command="{Binding NavigateToSettingsCommand}" Width="36" Height="36"/>
-            </DockPanel>
+            <!-- 自定义标题栏：可拖动 -->
+            <Border Background="#FFFFFF" MouseLeftButtonDown="Header_MouseDown"
+                    Height="48" VerticalAlignment="Top">
+                <Grid Margin="24,0">
+                    <!-- 左：品牌 -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="28" Height="28" CornerRadius="6" Background="#D97757"
+                                Margin="0,0,10,0">
+                            <TextBlock Text="M" Foreground="White" FontSize="14" FontWeight="Bold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="ModelLink" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="#1F2937" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- 中：Tab 导航 -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                        <RadioButton x:Name="TabProviders" GroupName="NavTab" IsChecked="True"
+                                     Content="服务商管理" Style="{StaticResource TabButtonStyle}"
+                                     Checked="TabProviders_Checked"/>
+                        <RadioButton x:Name="TabSettings" GroupName="NavTab"
+                                     Content="系统设置" Style="{StaticResource TabButtonStyle}"
+                                     Checked="TabSettings_Checked"/>
+                        <RadioButton x:Name="TabLogs" GroupName="NavTab"
+                                     Content="请求日志" Style="{StaticResource TabButtonStyle}"
+                                     Checked="TabLogs_Checked"/>
+                    </StackPanel>
+
+                    <!-- 右：状态指示 -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                        <Ellipse Width="7" Height="7" Fill="#22C55E" VerticalAlignment="Center"
+                                 Margin="0,0,6,0"/>
+                        <TextBlock Text="运行中" FontSize="12" Foreground="#22C55E"
+                                   VerticalAlignment="Center" FontWeight="Medium"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
         </Border>
 
-        <!-- 主内容区 -->
+        <!-- ===== 内容区 ===== -->
         <Grid>
-            <!-- ===== 主配置页 (index=0) ===== -->
-            <hc:ScrollViewer VerticalScrollBarVisibility="Auto"
-                             Visibility="{Binding SelectedNavigationIndex, Converter={StaticResource IndexToVisibilityConverter}, ConverterParameter=0}">
-                <StackPanel Margin="24" MaxWidth="800" HorizontalAlignment="Center">
-                    <!-- Provider 卡片列表 -->
-                    <ItemsControl ItemsSource="{Binding Providers}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type vm:ProviderViewModel}">
-                                <hc:Card MaxWidth="750" BorderThickness="0"
-                                         Effect="{StaticResource EffectShadow2}"
-                                         Margin="0,0,0,16" Padding="0">
-                                    <StackPanel Margin="24">
-                                        <!-- 卡片标题 + 删除 -->
-                                        <DockPanel Margin="0,0,0,16">
-                                            <TextBlock Text="{Binding DisplayTitle}"
-                                                       Style="{StaticResource TextBlockLargeBold}"/>
-                                            <Button DockPanel.Dock="Right" Content="删除服务商"
-                                                    Foreground="{DynamicResource DangerBrush}"
-                                                    BorderThickness="0" Background="Transparent" Cursor="Hand"
-                                                    CommandParameter="{Binding}"
-                                                    Click="DeleteProvider_Click"/>
-                                        </DockPanel>
-
-                                        <!-- API 地址 -->
-                                        <hc:TextBox Text="{Binding TargetUrl, UpdateSourceTrigger=PropertyChanged}"
-                                                    hc:InfoElement.Title="API 地址"
-                                                    hc:InfoElement.TitleWidth="80"
-                                                    hc:InfoElement.TitlePlacement="Left"
-                                                    hc:InfoElement.Placeholder="https://api.deepseek.com/anthropic"
-                                                    hc:InfoElement.ShowClearButton="True"
-                                                    Margin="0,0,0,12"/>
-
-                                        <!-- API 密钥 -->
-                                        <hc:TextBox Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}"
-                                                    hc:InfoElement.Title="API 密钥"
-                                                    hc:InfoElement.TitleWidth="80"
-                                                    hc:InfoElement.TitlePlacement="Left"
-                                                    hc:InfoElement.Placeholder="sk-xxx"
-                                                    hc:InfoElement.ShowClearButton="True"
-                                                    Margin="0,0,0,16"/>
-
-                                        <!-- 模型列表标题 + 测试按钮 -->
-                                        <DockPanel Margin="0,0,0,8">
-                                            <TextBlock Text="模型列表" FontSize="12" Opacity="0.5"
-                                                       VerticalAlignment="Center"/>
-                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                                <hc:LoadingCircle Width="16" Height="16"
-                                                                  Visibility="{Binding IsTesting, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                                <Button Content="测试连接" Command="{Binding TestCommand}"
-                                                        Margin="8,0,0,0"/>
-                                            </StackPanel>
-                                        </DockPanel>
-
-                                        <!-- 测试结果 -->
-                                        <Border CornerRadius="4" Padding="8,4" Margin="0,0,0,8"
-                                                Background="{DynamicResource SuccessBrush}"
-                                                Visibility="{Binding HasTestResult, Converter={StaticResource BoolToVisibilityConverter}}">
-                                            <TextBlock Text="{Binding TestResult}" FontSize="12" Foreground="White"/>
-                                        </Border>
-
-                                        <!-- 模型行列表 -->
-                                        <ItemsControl ItemsSource="{Binding Models}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="{x:Type vm:ModelEntryViewModel}">
-                                                    <Grid Margin="0,2">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <hc:TextBox Text="{Binding ModelName, UpdateSourceTrigger=PropertyChanged}"
-                                                                    hc:InfoElement.Placeholder="如 deepseek-v4-pro"/>
-                                                        <CheckBox Grid.Column="1" Content="1M"
-                                                                  IsChecked="{Binding Is1mEnabled}"
-                                                                  Margin="8,0" VerticalAlignment="Center"/>
-                                                        <Button Grid.Column="2" Content="x" Width="24" Height="24"
-                                                                Opacity="0.3" BorderThickness="0" Background="Transparent"
-                                                                CommandParameter="{Binding}"
-                                                                Click="DeleteModel_Click"/>
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-
-                                        <!-- 添加模型 -->
-                                        <Button Content="+ 添加模型" Margin="0,8,0,0"
-                                                Command="{Binding AddModelCommand}"
-                                                HorizontalAlignment="Left"/>
-                                    </StackPanel>
-                                </hc:Card>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <!-- 添加服务商 -->
-                    <Button Content="+ 添加服务商" Command="{Binding AddProviderCommand}"
-                            Margin="0,0,0,24" HorizontalAlignment="Center"/>
-
-                    <!-- 操作按钮 -->
+            <!-- ======== 页面 0: 服务商管理 ======== -->
+            <DockPanel x:Name="PageProviders">
+                <!-- 底部操作栏 -->
+                <Border DockPanel.Dock="Bottom" Background="#FFFFFF"
+                        Padding="32,18" BorderBrush="#F0F0F0" BorderThickness="0,1,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button Content="保存配置" Command="{Binding SaveConfigCommand}"
-                                Style="{StaticResource ButtonPrimary}"
-                                Width="140" Height="36" Margin="0,0,12,0"/>
+                                Style="{StaticResource ButtonGhost}"
+                                Width="150" Height="38" Margin="0,0,12,0"/>
                         <Button Content="应用到 Claude Desktop" Command="{Binding ApplyToClaudeCommand}"
-                                Style="{StaticResource ButtonSuccess}"
-                                Width="200" Height="36"/>
+                                Style="{StaticResource ButtonPrimary}"
+                                Width="210" Height="38"/>
                     </StackPanel>
+                </Border>
+
+                <!-- 滚动内容 -->
+                <hc:ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32,28,32,0" MaxWidth="820" HorizontalAlignment="Center">
+                        <!-- 空状态 -->
+                        <StackPanel Margin="0,80,0,0"
+                                    Visibility="{Binding HasProviders, Converter={StaticResource InvBoolToVis}}">
+                            <Border Width="80" Height="80" CornerRadius="20" Background="#FFF7ED"
+                                    HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE774;" FontSize="36" Foreground="#D97757" Opacity="0.6"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"/>
+                            </Border>
+                            <TextBlock Text="还没有配置服务商" HorizontalAlignment="Center"
+                                       FontSize="17" FontWeight="SemiBold" Foreground="#1F2937"
+                                       Margin="0,20,0,0"/>
+                            <TextBlock HorizontalAlignment="Center" TextAlignment="Center"
+                                       FontSize="13" Foreground="#9CA3AF" Margin="0,8,0,0">
+                                <Run Text="点击下方按钮添加你的第一个 API 服务商"/><LineBreak/>
+                                <Run Text="配置后即可将第三方模型映射到 Claude Desktop"/>
+                            </TextBlock>
+                            <Button Content="添加服务商" Command="{Binding AddProviderCommand}"
+                                    Style="{StaticResource ButtonPrimary}"
+                                    Width="180" Height="40" Margin="0,28,0,0"
+                                    HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Provider 卡片列表 -->
+                        <ItemsControl ItemsSource="{Binding Providers}"
+                                      Visibility="{Binding HasProviders, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ProviderViewModel}">
+                                    <Border Style="{StaticResource ProviderCard}">
+                                        <StackPanel>
+                                            <!-- 顶部颜色条 -->
+                                            <Border Height="4" CornerRadius="12,12,0,0"
+                                                    Background="{Binding AccentBrush}"/>
+                                            <StackPanel Margin="24,20,24,24">
+                                                <!-- 卡片标题行 -->
+                                                <DockPanel Margin="0,0,0,20">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Ellipse Width="10" Height="10"
+                                                                 Fill="{Binding AccentBrush}"
+                                                                 VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                        <TextBlock Text="{Binding DisplayTitle}"
+                                                                   FontSize="16" FontWeight="SemiBold"
+                                                                   Foreground="#1F2937"/>
+                                                        <Border Background="#F1F5F9" CornerRadius="4"
+                                                                Padding="8,2" Margin="10,0,0,0"
+                                                                VerticalAlignment="Center">
+                                                            <TextBlock FontSize="11" Foreground="#6B7280">
+                                                                <TextBlock.Text>
+                                                                    <MultiBinding StringFormat="{}{0} 个模型">
+                                                                        <Binding Path="Models.Count"/>
+                                                                    </MultiBinding>
+                                                                </TextBlock.Text>
+                                                            </TextBlock>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <Button DockPanel.Dock="Right" Content="&#xE74D;"
+                                                            FontFamily="Segoe MDL2 Assets"
+                                                            Style="{StaticResource ButtonIcon}"
+                                                            Click="DeleteProvider_Click"/>
+                                                </DockPanel>
+
+                                                <!-- API 地址 -->
+                                                <hc:TextBox Text="{Binding TargetUrl, UpdateSourceTrigger=PropertyChanged}"
+                                                            hc:InfoElement.Title="API 地址"
+                                                            hc:InfoElement.TitlePlacement="Top"
+                                                            hc:InfoElement.Placeholder="https://api.deepseek.com/anthropic"
+                                                            hc:InfoElement.ShowClearButton="True"
+                                                            Margin="0,0,0,14"/>
+
+                                                <!-- API 密钥 -->
+                                                <hc:TextBox Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}"
+                                                            hc:InfoElement.Title="API 密钥"
+                                                            hc:InfoElement.TitlePlacement="Top"
+                                                            hc:InfoElement.Placeholder="sk-xxx"
+                                                            hc:InfoElement.ShowClearButton="True"
+                                                            Margin="0,0,0,20"/>
+
+                                                <!-- 分隔线 -->
+                                                <Border Height="1" Background="#F3F4F6" Margin="0,0,0,16"/>
+
+                                                <!-- 模型列表标题 + 测试按钮 -->
+                                                <DockPanel Margin="0,0,0,12">
+                                                    <TextBlock Text="模型映射" FontSize="14" FontWeight="SemiBold"
+                                                               Foreground="#1F2937" VerticalAlignment="Center"/>
+                                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                                        <hc:LoadingCircle Width="14" Height="14" Margin="0,0,8,0"
+                                                                          Visibility="{Binding IsTesting, Converter={StaticResource BoolToVis}}"/>
+                                                        <Button Content="测试连接" Command="{Binding TestCommand}"
+                                                                Style="{StaticResource ButtonSmall}"/>
+                                                    </StackPanel>
+                                                </DockPanel>
+
+                                                <!-- 测试结果 -->
+                                                <Border CornerRadius="8" Padding="14,10" Margin="0,0,0,12"
+                                                        Visibility="{Binding HasTestResult, Converter={StaticResource BoolToVis}}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FEF2F2"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                    <Setter Property="Background" Value="#F0FDF4"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                                                   VerticalAlignment="Center" Margin="0,0,8,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#EF4444"/>
+                                                                    <Setter Property="Text" Value="&#xE711;"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#22C55E"/>
+                                                                            <Setter Property="Text" Value="&#xE73E;"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <TextBlock Text="{Binding TestResult}" FontSize="12">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#EF4444"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#16A34A"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- 模型行列表 -->
+                                                <ItemsControl ItemsSource="{Binding Models}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate DataType="{x:Type vm:ModelEntryViewModel}">
+                                                            <Border Style="{StaticResource ModelRow}">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock Grid.Column="0" Text="&#xE945;" FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="14" Foreground="#D97757" Opacity="0.5"
+                                                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                                    <hc:TextBox Grid.Column="1"
+                                                                                Text="{Binding ModelName, UpdateSourceTrigger=PropertyChanged}"
+                                                                                hc:InfoElement.Placeholder="如 deepseek-v4-pro"
+                                                                                BorderThickness="0" Background="Transparent"
+                                                                                Padding="0"/>
+                                                                    <CheckBox Grid.Column="2" Content="1M"
+                                                                              IsChecked="{Binding Is1mEnabled}"
+                                                                              Margin="12,0" VerticalAlignment="Center"
+                                                                              FontSize="12"/>
+                                                                    <Button Grid.Column="3" Content="&#xE711;"
+                                                                            FontFamily="Segoe MDL2 Assets"
+                                                                            FontSize="12"
+                                                                            Style="{StaticResource ButtonIcon}"
+                                                                            Width="28" Height="28"
+                                                                            Click="DeleteModel_Click"/>
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+
+                                                <!-- 添加模型 -->
+                                                <Button Content="+ 添加模型" Margin="0,4,0,0"
+                                                        Command="{Binding AddModelCommand}"
+                                                        HorizontalAlignment="Left"
+                                                        FontSize="12" Opacity="0.7"
+                                                        BorderThickness="0" Background="Transparent"
+                                                        Cursor="Hand" Foreground="#D97757"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- 添加服务商按钮 -->
+                        <Button Content="+ 添加服务商" Command="{Binding AddProviderCommand}"
+                                Style="{StaticResource AddProviderButton}"
+                                Margin="0,0,0,32"
+                                Visibility="{Binding HasProviders, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                </hc:ScrollViewer>
+            </DockPanel>
+
+            <!-- ======== 页面 1: 系统设置 ======== -->
+            <hc:ScrollViewer x:Name="PageSettings" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                <StackPanel Margin="32,28,32,32" MaxWidth="820" HorizontalAlignment="Center">
+                    <TextBlock Text="系统设置" Style="{StaticResource PageTitle}" Margin="0,0,0,24"/>
+
+                    <!-- 启动设置 -->
+                    <hc:Card Style="{StaticResource GroupCard}">
+                        <StackPanel Margin="24">
+                            <TextBlock Text="启动设置" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
+                            <DockPanel Margin="0,4">
+                                <StackPanel>
+                                    <TextBlock Text="开机自启动" FontSize="14" Foreground="#1F2937"/>
+                                    <TextBlock Text="系统启动时自动运行 ModelLink" Style="{StaticResource DescText}"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding IsAutoStartEnabled}"
+                                              VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </hc:Card>
+
+                    <!-- 代理设置 -->
+                    <hc:Card Style="{StaticResource GroupCard}">
+                        <StackPanel Margin="24">
+                            <TextBlock Text="代理设置" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
+                            <DockPanel Margin="0,4">
+                                <StackPanel>
+                                    <TextBlock Text="监听地址" FontSize="14" Foreground="#1F2937"/>
+                                    <TextBlock Text="代理服务器绑定的网络接口" Style="{StaticResource DescText}"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <hc:Shield DockPanel.Dock="Right" Subject="IP" Status="127.0.0.1" Color="#6B7280"
+                                           VerticalAlignment="Center"/>
+                            </DockPanel>
+                            <Border Height="1" Background="#F3F4F6" Margin="0,14"/>
+                            <DockPanel Margin="0,4">
+                                <StackPanel>
+                                    <TextBlock Text="监听端口" FontSize="14" Foreground="#1F2937"/>
+                                    <TextBlock Text="代理服务器监听的端口号" Style="{StaticResource DescText}"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <hc:Shield DockPanel.Dock="Right" Subject="PORT" Status="5678" Color="#D97757"
+                                           VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </hc:Card>
+
+                    <!-- 关于 -->
+                    <hc:Card Style="{StaticResource GroupCard}">
+                        <StackPanel Margin="24">
+                            <TextBlock Text="关于" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="ModelLink v1.0" FontSize="15" FontWeight="Medium"
+                                           Foreground="#1F2937" VerticalAlignment="Center"/>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <hc:Shield Subject=".NET" Status="8.0" Color="#512BD4" Margin="0,0,6,0"/>
+                                    <hc:Shield Subject="WPF" Status="Desktop" Color="#D97757"/>
+                                </StackPanel>
+                            </DockPanel>
+                            <TextBlock Text="Claude Desktop 第三方模型代理管理工具"
+                                       Style="{StaticResource DescText}" Margin="0,0,0,4"/>
+                            <TextBlock Text="林子与咖啡 · 免费软件，不可商业化"
+                                       FontSize="12" Foreground="#9CA3AF" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </hc:Card>
                 </StackPanel>
             </hc:ScrollViewer>
 
-            <!-- ===== 设置页 (index=1) ===== -->
-            <hc:ScrollViewer VerticalScrollBarVisibility="Auto"
-                             Visibility="{Binding SelectedNavigationIndex, Converter={StaticResource IndexToVisibilityConverter}, ConverterParameter=1}">
-                <StackPanel Margin="24" MaxWidth="800" HorizontalAlignment="Center">
-                    <!-- 返回按钮 -->
-                    <Button Content="&#x2190; 返回" Command="{Binding NavigateToSettingsCommand}"
-                            Margin="0,0,0,16" HorizontalAlignment="Left"
-                            Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+            <!-- ======== 页面 2: 请求日志 ======== -->
+            <DockPanel x:Name="PageLogs" Visibility="Collapsed">
+                <StackPanel Margin="32,28,32,0" MaxWidth="820" HorizontalAlignment="Center">
+                    <DockPanel Margin="0,0,0,20">
+                        <TextBlock Text="请求日志" Style="{StaticResource PageTitle}"/>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="清空" Command="{Binding ClearLogsCommand}"
+                                    Style="{StaticResource ButtonSmall}" Margin="0,0,8,0"/>
+                            <Button Content="刷新" Command="{Binding RefreshLogsCommand}"
+                                    Style="{StaticResource ButtonPrimary}"
+                                    Height="28" Padding="12,0" FontSize="12"/>
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
 
-                    <!-- 自启动卡片 -->
-                    <hc:Card BorderThickness="0" Effect="{StaticResource EffectShadow2}"
-                             Margin="0,0,0,16" Padding="0">
-                        <DockPanel Margin="24">
-                            <TextBlock Text="开机自启动" Style="{StaticResource TextBlockLargeBold}"
-                                       VerticalAlignment="Center"/>
-                            <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding IsAutoStartEnabled}"/>
-                        </DockPanel>
-                    </hc:Card>
+                <hc:ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32,0,32,32" MaxWidth="820" HorizontalAlignment="Center">
+                        <!-- 日志为空时 -->
+                        <StackPanel Margin="0,60,0,0"
+                                    Visibility="{Binding HasLogs, Converter={StaticResource InvBoolToVis}}">
+                            <Border Width="80" Height="80" CornerRadius="20" Background="#FFF7ED"
+                                    HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE896;" FontSize="36" Foreground="#D97757" Opacity="0.6"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"/>
+                            </Border>
+                            <TextBlock Text="暂无请求日志" HorizontalAlignment="Center"
+                                       FontSize="16" FontWeight="SemiBold" Foreground="#1F2937"
+                                       Margin="0,20,0,0"/>
+                            <TextBlock Text="当 Claude Desktop 发送请求时，日志将在这里显示"
+                                       HorizontalAlignment="Center"
+                                       FontSize="13" Foreground="#9CA3AF" Margin="0,8,0,0"/>
+                        </StackPanel>
 
-                    <!-- 请求日志卡片 -->
-                    <hc:Card BorderThickness="0" Effect="{StaticResource EffectShadow2}"
-                             Margin="0,0,0,16" Padding="0">
-                        <StackPanel Margin="24">
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock Text="请求日志" Style="{StaticResource TextBlockLargeBold}"/>
-                                <Button DockPanel.Dock="Right" Content="刷新"
-                                        Command="{Binding RefreshLogsCommand}"/>
-                            </DockPanel>
-                            <ListView ItemsSource="{Binding Logs}" MaxHeight="300">
+                        <!-- 日志列表 -->
+                        <hc:Card Style="{StaticResource GroupCard}"
+                                 Visibility="{Binding HasLogs, Converter={StaticResource BoolToVis}}">
+                            <ListView ItemsSource="{Binding Logs}" MinHeight="340"
+                                      BorderThickness="0" Background="Transparent">
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem">
                                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Padding" Value="14,10"/>
+                                        <Setter Property="BorderBrush" Value="#F3F4F6"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
                                     </Style>
                                 </ListView.ItemContainerStyle>
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="时间" Width="80"
+                                        <GridViewColumn Header="时间" Width="110"
                                                         DisplayMemberBinding="{Binding Time}"/>
-                                        <GridViewColumn Header="模型" Width="180"
+                                        <GridViewColumn Header="模型" Width="360"
                                                         DisplayMemberBinding="{Binding Model}"/>
-                                        <GridViewColumn Header="状态" Width="80">
+                                        <GridViewColumn Header="状态" Width="110">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <Ellipse Width="6" Height="6" Margin="0,0,4,0">
+                                                        <Ellipse Width="8" Height="8" Margin="0,0,6,0">
                                                             <Ellipse.Style>
                                                                 <Style TargetType="Ellipse">
-                                                                    <Setter Property="Fill" Value="{DynamicResource DangerBrush}"/>
+                                                                    <Setter Property="Fill" Value="#EF4444"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsSuccess}" Value="True">
-                                                                            <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
+                                                                            <Setter Property="Fill" Value="#22C55E"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </Ellipse.Style>
                                                         </Ellipse>
-                                                        <TextBlock Text="{Binding StatusText}">
+                                                        <TextBlock Text="{Binding StatusText}" FontSize="12">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
-                                                                    <Setter Property="Opacity" Value="0.6"/>
+                                                                    <Setter Property="Foreground" Value="#6B7280"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsSuccess}" Value="False">
-                                                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
-                                                                            <Setter Property="Opacity" Value="1"/>
+                                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                                            <Setter Property="FontWeight" Value="Medium"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -241,14 +464,30 @@
                                     </GridView>
                                 </ListView.View>
                             </ListView>
-                        </StackPanel>
-                    </hc:Card>
+                        </hc:Card>
 
-                    <!-- 作者信息 -->
-                    <TextBlock Text="林子与咖啡 (免费软件，不可商业化)"
-                               HorizontalAlignment="Center" Opacity="0.4" FontSize="11" Margin="0,8"/>
-                </StackPanel>
-            </hc:ScrollViewer>
+                        <!-- 日志统计 -->
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0"
+                                    Visibility="{Binding HasLogs, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding LogSummary}" FontSize="12" Foreground="#6B7280"/>
+                            <TextBlock FontSize="12" Margin="16,0,0,0" Foreground="#22C55E">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="成功 {0}">
+                                        <Binding Path="LogSuccessCount"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                            <TextBlock FontSize="12" Margin="16,0,0,0" Foreground="#EF4444">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="失败 {0}">
+                                        <Binding Path="LogFailCount"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                </hc:ScrollViewer>
+            </DockPanel>
         </Grid>
     </DockPanel>
 </hc:Window>

@@ -22,10 +22,22 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isBusy;
 
     [ObservableProperty]
-    private int _selectedNavigationIndex;
+    private bool _isAutoStartEnabled;
 
     [ObservableProperty]
-    private bool _isAutoStartEnabled;
+    private string _logSummary = "暂无日志";
+
+    [ObservableProperty]
+    private int _logSuccessCount;
+
+    [ObservableProperty]
+    private int _logFailCount;
+
+    [ObservableProperty]
+    private bool _hasProviders;
+
+    [ObservableProperty]
+    private bool _hasLogs;
 
     public ObservableCollection<ProviderViewModel> Providers { get; } = [];
     public ObservableCollection<LogEntry> Logs { get; } = [];
@@ -46,10 +58,27 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var config = _configService.CurrentConfig;
         Providers.Clear();
+        var index = 0;
         foreach (var provider in config.Providers)
         {
-            Providers.Add(new ProviderViewModel(provider));
+            var pvm = new ProviderViewModel(provider) { Index = index++ };
+            Providers.Add(pvm);
         }
+        UpdateHasProviders();
+        Providers.CollectionChanged += (_, _) => UpdateHasProviders();
+    }
+
+    private void UpdateHasProviders()
+    {
+        HasProviders = Providers.Count > 0;
+        var idx = 0;
+        foreach (var p in Providers)
+            p.Index = idx++;
+    }
+
+    private void UpdateHasLogs()
+    {
+        HasLogs = Logs.Count > 0;
     }
 
     private AppConfig BuildConfig()
@@ -64,12 +93,6 @@ public sealed partial class MainViewModel : ObservableObject
     private void AddProvider()
     {
         Providers.Add(new ProviderViewModel());
-    }
-
-    [RelayCommand]
-    private void NavigateToSettings()
-    {
-        SelectedNavigationIndex = SelectedNavigationIndex == 0 ? 1 : 0;
     }
 
     /// <summary>
@@ -138,7 +161,6 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void RefreshLogs()
     {
-        // 通过 App.Services 获取日志
         var proxyService = App.Services.GetService(typeof(IProxyServerService)) as IProxyServerService;
         if (proxyService == null) return;
 
@@ -147,6 +169,20 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Logs.Add(log);
         }
+        LogSuccessCount = Logs.Count(l => l.IsSuccess);
+        LogFailCount = Logs.Count - LogSuccessCount;
+        LogSummary = Logs.Count > 0 ? $"共 {Logs.Count} 条记录" : "暂无日志";
+        UpdateHasLogs();
+    }
+
+    [RelayCommand]
+    private void ClearLogs()
+    {
+        Logs.Clear();
+        LogSuccessCount = 0;
+        LogFailCount = 0;
+        LogSummary = "暂无日志";
+        UpdateHasLogs();
     }
 
     partial void OnIsAutoStartEnabledChanged(bool value)
