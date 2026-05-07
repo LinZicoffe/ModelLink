@@ -179,8 +179,10 @@ dotnet publish "claude model setting/claude model setting.csproj" -c Release -r 
 
 安装包版本号在 `setup.iss` 顶部 `#define MyAppVersion` 处修改。
 
-## 免责声明
+## 许可证
 
-- 本软件基于 **抖音 Winhao学AI** 的原版 ModelLink 功能复刻
-- **完全免费，不可商业化**
-- 仅供学习和技术研究使用
+本项目采用 **CC BY-NC-ND 4.0**（署名-非商业性使用-禁止演绎）许可证，详见 [LICENSE](LICENSE)。
+
+- **署名**：使用时须保留原作者信息
+- **非商业性使用**：不得用于任何商业目的
+- **禁止演绎**：不得修改后再分发（防止去除水印后转卖）
