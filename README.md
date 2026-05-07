@@ -3,10 +3,17 @@
 > **本软件完全免费，仅供个人学习和非商业用途。严禁任何形式的商业化行为。**
 >
 > 原作者：**抖音 Winhao学AI**（抖音号：54927876676）
+>        原项目地址：**https://github.com/Win-Hao/ModelLink**
 >
 > C# WPF 版本基于原 Rust 版本功能复刻，使用 WPF + HandyControl 原生界面替代 WebView。
 
 让 Claude Desktop 桌面端接入任意第三方 API 模型的本地代理工具。
+
+## 下载安装
+
+前往 [Releases 页面](https://github.com/LinZicoffe/ModelLink/releases) 下载最新版安装包。
+
+安装包为自包含部署，无需额外安装 .NET 运行时。
 
 ## 功能
 
@@ -157,6 +164,20 @@ Claude Desktop → http://127.0.0.1:5678 (本地代理) → 第三方 API
 | JSON | serde | System.Text.Json |
 | 系统托盘 | tray_icon crate | HandyControl NotifyIcon |
 | 运行时 | 无（单文件编译） | 需要 .NET 8.0 Runtime |
+
+## 构建与打包
+
+需要 .NET 8.0 SDK 和 [Inno Setup 6](https://jrsoftware.org/isdl.php)。
+
+```bash
+# 1. 自包含发布（输出到 publish_output/）
+dotnet publish "claude model setting/claude model setting.csproj" -c Release -r win-x64 --self-contained true -o publish_output
+
+# 2. 编译安装包（输出到 Output/）
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
+```
+
+安装包版本号在 `setup.iss` 顶部 `#define MyAppVersion` 处修改。
 
 ## 免责声明
 
