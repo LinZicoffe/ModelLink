@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using claude_model_setting.Helpers;
@@ -12,8 +13,6 @@ namespace claude_model_setting.Services;
 public sealed class ClaudeDesktopService : IClaudeDesktopService
 {
     private const string ProviderUuid = "a0a0a0a0-b1b1-4c2c-9d3d-e4e4e4e4e4e4";
-    private const string ProxyUrl = "http://127.0.0.1:5678";
-
     private readonly IConfigService _configService;
     private readonly IModelResolverService _resolverService;
 
@@ -66,43 +65,79 @@ public sealed class ClaudeDesktopService : IClaudeDesktopService
     }
 
     /// <summary>
-    /// 重启 Claude Desktop 进程
+    /// 重启 Claude Desktop 进程（仅针对 Anthropic 官方桌面端路径，避免误杀 Claude Code 等同名进程）
     /// </summary>
     public async Task RestartClaudeDesktopAsync()
     {
-        var script = """
-            $ErrorActionPreference = 'SilentlyContinue'
-            $proc = Get-Process -Name 'Claude' -ErrorAction SilentlyContinue
-            if ($proc) {
-                $path = $proc.Path
-                Stop-Process -Name 'Claude' -Force
-                Start-Sleep -Seconds 3
-                if ($path) {
-                    Start-Process $path
-                } else {
-                    # 尝试 UWP 路径
-                    $pkg = Get-AppxPackage -Name '*Claude*' | Select-Object -First 1
-                    if ($pkg) {
-                        $fam = $pkg.PackageFamilyName
-                        Start-Process "explorer.exe" "shell:AppsFolder\$fam!Claude"
-                    }
-                }
-            }
-            """;
-
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "powershell",
-            Arguments = $"-WindowStyle Hidden -Command \"{script.Replace("\"", "\\\"")}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
         try
         {
-            System.Diagnostics.Process.Start(psi);
-            Log.Information("已发送 Claude Desktop 重启命令");
-            await Task.CompletedTask;
+            var desktopProcesses = new List<(Process Proc, string ExePath)>();
+
+            foreach (var proc in Process.GetProcessesByName("Claude"))
+            {
+                string exePath;
+                try
+                {
+                    exePath = proc.MainModule?.FileName ?? string.Empty;
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "无法读取进程 {Pid} 的主模块路径（可能被保护或非托管），跳过", proc.Id);
+                    proc.Dispose();
+                    continue;
+                }
+
+                if (!IsAnthropicClaudeDesktopExePath(exePath))
+                {
+                    proc.Dispose();
+                    continue;
+                }
+
+                desktopProcesses.Add((proc, exePath));
+            }
+
+            var exeToLaunch = PickPreferredExePath(desktopProcesses.Select(x => x.ExePath))
+                              ?? FindInstalledClaudeDesktopExe();
+
+            foreach (var (proc, exePath) in desktopProcesses)
+            {
+                try
+                {
+                    if (!proc.HasExited)
+                    {
+                        proc.Kill();
+                        Log.Information("已结束 Claude Desktop 进程 {Pid}: {Path}", proc.Id, exePath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "结束 Claude Desktop 进程 {Pid} 失败", proc.Id);
+                }
+                finally
+                {
+                    proc.Dispose();
+                }
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(exeToLaunch) && File.Exists(exeToLaunch))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = exeToLaunch,
+                    UseShellExecute = true,
+                });
+                Log.Information("已启动 Claude Desktop: {Path}", exeToLaunch);
+            }
+            else if (desktopProcesses.Count > 0)
+            {
+                Log.Warning("已结束运行中的 Claude Desktop，但未解析到可重新启动的 exe，请手动打开 Claude Desktop");
+            }
+            else
+            {
+                Log.Warning("未检测到运行中的 Claude Desktop；也未找到常见安装路径下的 Claude.exe，请手动启动以使配置生效");
+            }
         }
         catch (Exception ex)
         {
@@ -110,6 +145,108 @@ public sealed class ClaudeDesktopService : IClaudeDesktopService
             throw new InvalidOperationException($"重启 Claude Desktop 失败: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// 判断 exe 完整路径是否属于 Anthropic Claude Desktop（而非 Claude Code / IDE 插件等）
+    /// </summary>
+    private static bool IsAnthropicClaudeDesktopExePath(string fullPath)
+    {
+        if (string.IsNullOrWhiteSpace(fullPath))
+            return false;
+
+        var normalized = fullPath.Replace('/', '\\');
+
+        foreach (var fragment in ClaudeDesktopPathBlacklist)
+        {
+            if (normalized.Contains(fragment, StringComparison.OrdinalIgnoreCase))
+                return false;
+        }
+
+        foreach (var fragment in ClaudeDesktopPathWhitelist)
+        {
+            if (normalized.Contains(fragment, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 从多个运行实例中选取最可信的 exe（优先官方目录 AnthropicClaude）
+    /// </summary>
+    private static string? PickPreferredExePath(IEnumerable<string> paths)
+    {
+        var list = paths
+            .Where(p => !string.IsNullOrWhiteSpace(p) && File.Exists(p))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (list.Count == 0)
+            return null;
+
+        return list
+            .OrderByDescending(p => p.Contains("AnthropicClaude", StringComparison.OrdinalIgnoreCase))
+            .ThenByDescending(p => p.Contains(@"\Anthropic\Claude\", StringComparison.OrdinalIgnoreCase))
+            .ThenByDescending(p => p.Contains(@"\Programs\Claude\", StringComparison.OrdinalIgnoreCase))
+            .First();
+    }
+
+    /// <summary>
+    /// 在未运行时探测常见安装路径（与路径白名单一致）
+    /// </summary>
+    private static string? FindInstalledClaudeDesktopExe()
+    {
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+
+        foreach (var candidate in BuildClaudeDesktopExeCandidates(localAppData, programFiles, programFilesX86))
+        {
+            if (File.Exists(candidate) && IsAnthropicClaudeDesktopExePath(candidate))
+                return candidate;
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<string> BuildClaudeDesktopExeCandidates(string localAppData, string programFiles, string programFilesX86)
+    {
+        yield return Path.Combine(localAppData, "AnthropicClaude", "Claude.exe");
+        yield return Path.Combine(localAppData, "AnthropicClaude", "current", "Claude.exe");
+        yield return Path.Combine(localAppData, "Programs", "Claude", "Claude.exe");
+        yield return Path.Combine(localAppData, "Programs", "Anthropic Claude", "Claude.exe");
+        yield return Path.Combine(programFiles, "Anthropic", "Claude", "Claude.exe");
+        yield return Path.Combine(programFiles, "Claude", "Claude.exe");
+        yield return Path.Combine(programFilesX86, "Anthropic", "Claude", "Claude.exe");
+        yield return Path.Combine(programFilesX86, "Claude", "Claude.exe");
+    }
+
+    /// <summary>
+    /// 命中任一则视为「非桌面端」路径，避免误判
+    /// </summary>
+    private static readonly string[] ClaudeDesktopPathBlacklist =
+    [
+        @"claude-code",
+        @"claude code",
+        @"claude-code.exe",
+        @"\.vscode\",
+        @"\vscode\",
+        "node_modules",
+        @"\npm\",
+        @"\nvm\",
+        @"\cursor\",
+        @"\.cursor\",
+    ];
+
+    /// <summary>
+    /// Anthropic Claude Desktop 常见安装目录片段（Windows）
+    /// </summary>
+    private static readonly string[] ClaudeDesktopPathWhitelist =
+    [
+        @"\AnthropicClaude\",
+        @"\Programs\Claude\",
+        @"\Anthropic\Claude\",
+    ];
 
     /// <summary>
     /// 写入 Claude-3p 配置目录
@@ -149,7 +286,7 @@ public sealed class ClaudeDesktopService : IClaudeDesktopService
         {
             coworkEgressAllowedHosts = new[] { "*" },
             inferenceProvider = "gateway",
-            inferenceGatewayBaseUrl = ProxyUrl,
+            inferenceGatewayBaseUrl = Constants.ProxyUrl,
             inferenceGatewayApiKey = "proxy",
             inferenceGatewayAuthScheme = "bearer",
             inferenceModels,

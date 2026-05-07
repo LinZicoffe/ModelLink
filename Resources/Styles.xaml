@@ -2,68 +2,138 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:hc="https://handyorg.github.io/handycontrol">
 
-    <!-- ===== 色彩体系 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 色彩体系                                                                 -->
+    <!-- ===================================================================== -->
     <Color x:Key="BrandColor">#D97757</Color>
-    <Color x:Key="BrandLightColor">#F97316</Color>
-    <Color x:Key="BrandDarkColor">#EA580C</Color>
+    <Color x:Key="BrandLightColor">#F39B7D</Color>
+    <Color x:Key="BrandDarkColor">#C45E3E</Color>
+    <Color x:Key="BrandDeepColor">#A14829</Color>
 
     <SolidColorBrush x:Key="BrandBrush" Color="#D97757"/>
-    <SolidColorBrush x:Key="BrandLightBrush" Color="#F97316"/>
-    <SolidColorBrush x:Key="BrandDarkBrush" Color="#EA580C"/>
+    <SolidColorBrush x:Key="BrandLightBrush" Color="#F39B7D"/>
+    <SolidColorBrush x:Key="BrandDarkBrush" Color="#C45E3E"/>
     <SolidColorBrush x:Key="BrandBgBrush" Color="#FFF7ED"/>
+    <SolidColorBrush x:Key="BrandBgSoftBrush" Color="#FFFBF7"/>
 
+    <!-- 品牌渐变 -->
+    <LinearGradientBrush x:Key="BrandGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#E78A6A" Offset="0"/>
+        <GradientStop Color="#D97757" Offset="0.5"/>
+        <GradientStop Color="#C45E3E" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BrandGradientHorizontal" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#E78A6A" Offset="0"/>
+        <GradientStop Color="#C45E3E" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- 页面 / 卡片 / 输入 -->
     <SolidColorBrush x:Key="PageBgBrush" Color="#F8FAFC"/>
     <SolidColorBrush x:Key="CardBgBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="InputBgBrush" Color="#F1F5F9"/>
+    <SolidColorBrush x:Key="InputBgBrush" Color="#FAFBFC"/>
+    <SolidColorBrush x:Key="SubtleBgBrush" Color="#F9FAFB"/>
 
+    <!-- 文本 -->
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1F2937"/>
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#6B7280"/>
     <SolidColorBrush x:Key="TextMutedBrush" Color="#9CA3AF"/>
+    <SolidColorBrush x:Key="TextOnBrandBrush" Color="#FFFFFF"/>
+
+    <!-- 边框 -->
     <SolidColorBrush x:Key="BorderLightBrush" Color="#E5E7EB"/>
     <SolidColorBrush x:Key="BorderMutedBrush" Color="#F3F4F6"/>
+    <SolidColorBrush x:Key="BorderHairlineBrush" Color="#EEF0F3"/>
 
+    <!-- 状态色 -->
     <SolidColorBrush x:Key="SuccessBrush" Color="#22C55E"/>
+    <SolidColorBrush x:Key="SuccessSoftBrush" Color="#16A34A"/>
     <SolidColorBrush x:Key="SuccessBgBrush" Color="#F0FDF4"/>
     <SolidColorBrush x:Key="ErrorBrush" Color="#EF4444"/>
     <SolidColorBrush x:Key="ErrorBgBrush" Color="#FEF2F2"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="WarningBgBrush" Color="#FFFBEB"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="#3B82F6"/>
+    <SolidColorBrush x:Key="InfoBgBrush" Color="#EFF6FF"/>
+    <SolidColorBrush x:Key="PurpleBrush" Color="#8B5CF6"/>
+    <SolidColorBrush x:Key="PurpleBgBrush" Color="#F5F3FF"/>
 
-    <!-- ===== 圆角体系 ===== -->
-    <CornerRadius x:Key="CornerRadiusCard">12</CornerRadius>
-    <CornerRadius x:Key="CornerRadiusInput">8</CornerRadius>
-    <CornerRadius x:Key="CornerRadiusButton">8</CornerRadius>
-    <CornerRadius x:Key="CornerRadiusSmall">6</CornerRadius>
-    <CornerRadius x:Key="CornerRadiusTag">4</CornerRadius>
+    <!-- ===================================================================== -->
+    <!-- 圆角体系                                                                 -->
+    <!-- ===================================================================== -->
+    <CornerRadius x:Key="CornerRadiusCard">14</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusInput">10</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusButton">10</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusSmall">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusTag">6</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusPill">999</CornerRadius>
 
-    <!-- ===== 主按钮：品牌橙 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 阴影体系                                                                 -->
+    <!-- ===================================================================== -->
+    <DropShadowEffect x:Key="ShadowSm" BlurRadius="8" ShadowDepth="1" Opacity="0.06" Color="#000000" Direction="270"/>
+    <DropShadowEffect x:Key="ShadowMd" BlurRadius="20" ShadowDepth="4" Opacity="0.08" Color="#0F172A" Direction="270"/>
+    <DropShadowEffect x:Key="ShadowLg" BlurRadius="32" ShadowDepth="8" Opacity="0.12" Color="#0F172A" Direction="270"/>
+
+    <!-- ===================================================================== -->
+    <!-- 主按钮：品牌渐变 + 彩色阴影 + 抬升                                          -->
+    <!-- ===================================================================== -->
     <Style x:Key="ButtonPrimary" TargetType="Button">
-        <Setter Property="Height" Value="36"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="MinWidth" Value="120"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="White"/>
-        <Setter Property="Background" Value="#D97757"/>
+        <Setter Property="Background" Value="{StaticResource BrandGradient}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            CornerRadius="{StaticResource CornerRadiusButton}"
-                            Padding="16,0">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Border.RenderTransform>
-                            <ScaleTransform x:Name="BdScale" ScaleX="1" ScaleY="1"/>
-                        </Border.RenderTransform>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="Shadow" Margin="0,3,0,0" CornerRadius="{StaticResource CornerRadiusButton}"
+                                Background="{StaticResource BrandBrush}" Opacity="0.35">
+                            <Border.Effect>
+                                <BlurEffect Radius="14"/>
+                            </Border.Effect>
+                        </Border>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="{StaticResource CornerRadiusButton}"
+                                Padding="20,0">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="BdTrans" Y="0"/>
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#C4623E"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrandGradientHorizontal}"/>
+                            <Setter TargetName="Shadow" Property="Opacity" Value="0.55"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BdTrans" Storyboard.TargetProperty="Y"
+                                                         To="-1" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BdTrans" Storyboard.TargetProperty="Y"
+                                                         To="0" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#B5573A"/>
+                            <Setter TargetName="Shadow" Property="Opacity" Value="0.18"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="#9CA3AF"/>
                             <Setter TargetName="Bd" Property="Background" Value="#E5E7EB"/>
+                            <Setter TargetName="Shadow" Property="Opacity" Value="0"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -71,41 +141,26 @@
         </Setter>
     </Style>
 
-    <!-- ===== 成功按钮：绿色 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 成功按钮（绿色渐变）                                                       -->
+    <!-- ===================================================================== -->
+    <LinearGradientBrush x:Key="SuccessGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#34D399" Offset="0"/>
+        <GradientStop Color="#16A34A" Offset="1"/>
+    </LinearGradientBrush>
     <Style x:Key="ButtonSuccess" TargetType="Button" BasedOn="{StaticResource ButtonPrimary}">
-        <Setter Property="Background" Value="#22C55E"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            CornerRadius="{StaticResource CornerRadiusButton}"
-                            Padding="16,0">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#16A34A"/>
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#15803D"/>
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="#9CA3AF"/>
-                            <Setter TargetName="Bd" Property="Background" Value="#E5E7EB"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="Background" Value="{StaticResource SuccessGradient}"/>
     </Style>
 
-    <!-- ===== 幽灵按钮：透明 + 品牌橙边框 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 幽灵按钮：透明 + 描边                                                     -->
+    <!-- ===================================================================== -->
     <Style x:Key="ButtonGhost" TargetType="Button">
-        <Setter Property="Height" Value="38"/>
+        <Setter Property="Height" Value="40"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="Medium"/>
-        <Setter Property="Foreground" Value="#6B7280"/>
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#4B5563"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
@@ -114,17 +169,17 @@
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
                             BorderBrush="#E5E7EB" BorderThickness="1"
                             CornerRadius="{StaticResource CornerRadiusButton}"
-                            Padding="16,0">
+                            Padding="20,0">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Bd" Property="BorderBrush" Value="#D97757"/>
-                            <Setter TargetName="Bd" Property="Background" Value="#FFFBF9"/>
-                            <Setter Property="Foreground" Value="#D97757"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#FFFBF7"/>
+                            <Setter Property="Foreground" Value="#C45E3E"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#FFF7ED"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#FFF1E8"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -132,12 +187,16 @@
         </Setter>
     </Style>
 
-    <!-- ===== 小按钮 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 小按钮（次级操作）                                                        -->
+    <!-- ===================================================================== -->
     <Style x:Key="ButtonSmall" TargetType="Button">
-        <Setter Property="Height" Value="28"/>
+        <Setter Property="Height" Value="30"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Padding" Value="12,0"/>
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="#4B5563"/>
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="BorderBrush" Value="#E5E7EB"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -153,7 +212,9 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#F3F4F6"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#FFFBF7"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#D97757"/>
+                            <Setter Property="Foreground" Value="#C45E3E"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -161,11 +222,13 @@
         </Setter>
     </Style>
 
-    <!-- ===== 图标按钮（删除等） ===== -->
+    <!-- ===================================================================== -->
+    <!-- 图标按钮（删除等危险操作）                                                  -->
+    <!-- ===================================================================== -->
     <Style x:Key="ButtonIcon" TargetType="Button">
         <Setter Property="Width" Value="32"/>
         <Setter Property="Height" Value="32"/>
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="Foreground" Value="#9CA3AF"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -188,37 +251,92 @@
         </Setter>
     </Style>
 
-    <!-- ===== 添加服务商虚线按钮 ===== -->
+    <!-- 头部白色图标按钮（hero 上的删除按钮）-->
+    <Style x:Key="ButtonIconLight" TargetType="Button">
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="Background" Value="#FFFFFF22"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                            CornerRadius="{StaticResource CornerRadiusSmall}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#FFFFFF44"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===================================================================== -->
+    <!-- 添加服务商虚线按钮                                                        -->
+    <!-- ===================================================================== -->
     <Style x:Key="AddProviderButton" TargetType="Button">
-        <Setter Property="Height" Value="52"/>
+        <Setter Property="Height" Value="60"/>
         <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Foreground" Value="#6B7280"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" BorderBrush="#D0D5DD" BorderThickness="1,1,1,1"
-                            CornerRadius="{StaticResource CornerRadiusCard}" Background="Transparent">
-                        <Border.Clip>
-                            <RectangleGeometry RadiusX="12" RadiusY="12">
-                                <RectangleGeometry.Rect>
-                                    <Rect X="0" Y="0" Width="800" Height="60"/>
-                                </RectangleGeometry.Rect>
-                            </RectangleGeometry>
-                        </Border.Clip>
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Orientation="Horizontal">
-                            <TextBlock Text="+" FontSize="22" Margin="0,-4,8,0"
-                                       VerticalAlignment="Center"
-                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                            <ContentPresenter VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                    <Grid>
+                        <Rectangle x:Name="DashRect" RadiusX="14" RadiusY="14"
+                                   Stroke="#CBD5E1" StrokeThickness="1.4"
+                                   StrokeDashArray="4 3" Fill="Transparent"/>
+                        <Border x:Name="Bd" CornerRadius="{StaticResource CornerRadiusCard}"
+                                Background="Transparent">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                <Border x:Name="Plus" Width="24" Height="24" CornerRadius="6"
+                                        Background="#F3F4F6" Margin="0,0,10,0">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="PlusScale" CenterX="12" CenterY="12"
+                                                        ScaleX="1" ScaleY="1"/>
+                                    </Border.RenderTransform>
+                                    <TextBlock Text="+" FontSize="16" FontWeight="SemiBold"
+                                               Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="#D97757"/>
-                            <Setter TargetName="Bd" Property="Background" Value="#FFF7ED"/>
-                            <Setter Property="Foreground" Value="#D97757"/>
+                            <Setter TargetName="DashRect" Property="Stroke" Value="#D97757"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#FFFBF7"/>
+                            <Setter TargetName="Plus" Property="Background" Value="#FFE4D2"/>
+                            <Setter Property="Foreground" Value="#C45E3E"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PlusScale" Storyboard.TargetProperty="ScaleX"
+                                                         To="1.15" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="PlusScale" Storyboard.TargetProperty="ScaleY"
+                                                         To="1.15" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PlusScale" Storyboard.TargetProperty="ScaleX"
+                                                         To="1" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="PlusScale" Storyboard.TargetProperty="ScaleY"
+                                                         To="1" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -226,130 +344,215 @@
         </Setter>
     </Style>
 
-    <!-- ===== 顶部 Tab 按钮 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 顶部 Tab 按钮：pill 高亮 + Tag 传 Segoe MDL2 图标                         -->
+    <!-- ===================================================================== -->
     <Style x:Key="TabButtonStyle" TargetType="RadioButton">
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="Medium"/>
-        <Setter Property="Foreground" Value="#9CA3AF"/>
+        <Setter Property="Foreground" Value="#6B7280"/>
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Padding" Value="20,12"/>
-        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="Margin" Value="2,0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            CornerRadius="8" Padding="{TemplateBinding Padding}"
-                            Margin="2,0">
-                        <StackPanel>
-                            <ContentPresenter x:Name="Content" HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
-                            <Border x:Name="BottomIndicator" Height="3" CornerRadius="2"
-                                    Background="#D97757" Margin="6,8,6,0" Opacity="0"/>
+                            CornerRadius="{StaticResource CornerRadiusPill}"
+                            Padding="{TemplateBinding Padding}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="Icon" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                       Text="{TemplateBinding Tag}" Margin="0,0,7,0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{TemplateBinding Foreground}"/>
+                            <ContentPresenter VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="{x:Null}">
+                            <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Foreground" Value="#6B7280"/>
-                            <Setter TargetName="Bd" Property="Background" Value="#F9FAFB"/>
+                            <Setter Property="Foreground" Value="#1F2937"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#F3F4F6"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter Property="Foreground" Value="#D97757"/>
+                            <Setter Property="Foreground" Value="#FFFFFF"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
-                            <Setter TargetName="BottomIndicator" Property="Opacity" Value="1"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrandGradientHorizontal}"/>
                         </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrandGradient}"/>
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
-    <!-- ===== 分组卡片 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 通用卡片                                                                 -->
+    <!-- ===================================================================== -->
     <Style x:Key="GroupCard" TargetType="hc:Card">
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="#E5E7EB"/>
-        <Setter Property="Margin" Value="0,0,0,20"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Margin" Value="0,0,0,18"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="Effect" Value="{StaticResource ShadowSm}"/>
     </Style>
 
-    <!-- ===== Provider 卡片（顶部色条） ===== -->
+    <!-- ===================================================================== -->
+    <!-- Provider 卡片：hover 抬升 + 双层阴影                                       -->
+    <!-- ===================================================================== -->
     <Style x:Key="ProviderCard" TargetType="Border">
         <Setter Property="Background" Value="#FFFFFF"/>
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="CornerRadius" Value="14"/>
         <Setter Property="BorderBrush" Value="#E5E7EB"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Margin" Value="0,0,0,20"/>
-        <Setter Property="Effect">
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+        <Setter Property="Effect" Value="{StaticResource ShadowMd}"/>
+        <Setter Property="RenderTransform">
             <Setter.Value>
-                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.06" Color="#000000"/>
+                <TranslateTransform Y="0"/>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Effect" Value="{StaticResource ShadowLg}"/>
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                             To="-2" Duration="0:0:0.18"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                             To="0" Duration="0:0:0.18"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.ExitActions>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
-    <!-- ===== 底部操作栏 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 底部操作栏                                                                -->
+    <!-- ===================================================================== -->
     <Style x:Key="BottomBar" TargetType="Border">
-        <Setter Property="Background" Value="#FFFFFF"/>
-        <Setter Property="Padding" Value="32,20"/>
-        <Setter Property="BorderBrush" Value="#E5E7EB"/>
+        <Setter Property="Background" Value="#FFFFFFE6"/>
+        <Setter Property="Padding" Value="32,18"/>
+        <Setter Property="BorderBrush" Value="#0F172A14"/>
         <Setter Property="BorderThickness" Value="0,1,0,0"/>
     </Style>
 
-    <!-- ===== 分隔线 ===== -->
-    <Style x:Key="Divider" TargetType="Separator">
-        <Setter Property="Height" Value="1"/>
-        <Setter Property="Background" Value="#F3F4F6"/>
-        <Setter Property="Margin" Value="0,16"/>
-    </Style>
-
-    <!-- ===== 页面标题 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 文字样式                                                                 -->
+    <!-- ===================================================================== -->
     <Style x:Key="PageTitle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="22"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Foreground" Value="#1F2937"/>
     </Style>
 
-    <!-- ===== 小节标题 ===== -->
     <Style x:Key="SectionTitle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="15"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="#1F2937"/>
     </Style>
 
-    <!-- ===== 标签文字 ===== -->
     <Style x:Key="Label_text" TargetType="TextBlock">
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="#374151"/>
     </Style>
 
-    <!-- ===== 次要说明文字 ===== -->
     <Style x:Key="DescText" TargetType="TextBlock">
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Foreground" Value="#6B7280"/>
     </Style>
 
-    <!-- ===== 状态指示点 ===== -->
     <Style x:Key="StatusDot" TargetType="Ellipse">
         <Setter Property="Width" Value="8"/>
         <Setter Property="Height" Value="8"/>
         <Setter Property="Fill" Value="#22C55E"/>
     </Style>
 
-    <!-- ===== 模型行容器 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 模型行：芯片化                                                           -->
+    <!-- ===================================================================== -->
     <Style x:Key="ModelRow" TargetType="Border">
-        <Setter Property="Background" Value="#FFFFFF"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Background" Value="#FAFBFC"/>
+        <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Padding" Value="14,10"/>
         <Setter Property="Margin" Value="0,0,0,8"/>
         <Setter Property="BorderBrush" Value="#E5E7EB"/>
         <Setter Property="BorderThickness" Value="1"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#FFFFFF"/>
+                <Setter Property="BorderBrush" Value="#D1D5DB"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
-    <!-- ===== 测试结果容器 ===== -->
+    <!-- ===================================================================== -->
+    <!-- 测试结果横幅                                                              -->
+    <!-- ===================================================================== -->
     <Style x:Key="TestResultBox" TargetType="Border">
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="14,10"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="14,12"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
+    </Style>
+
+    <!-- ===================================================================== -->
+    <!-- 日志卡片行                                                                -->
+    <!-- ===================================================================== -->
+    <Style x:Key="LogRow" TargetType="Border">
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+        <Setter Property="BorderBrush" Value="#EEF0F3"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#FAFBFC"/>
+                <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 日志统计胶囊 -->
+    <Style x:Key="StatBadge" TargetType="Border">
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BorderBrush" Value="#E5E7EB"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="20,14"/>
+        <Setter Property="Effect" Value="{StaticResource ShadowSm}"/>
+    </Style>
+
+    <!-- 卡片 hero 内的"裸"输入框（无边框、透明背景，用于模型行）-->
+    <Style x:Key="ModelRowTextBox" TargetType="hc:TextBox" BasedOn="{StaticResource {x:Type hc:TextBox}}">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="MinHeight" Value="22"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="#1F2937"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Effect" Value="{x:Null}"/>
     </Style>
 
 </ResourceDictionary>

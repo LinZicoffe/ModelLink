@@ -23,11 +23,6 @@ public interface IConfigService
     Task SaveConfigAsync(AppConfig config);
 
     /// <summary>
-    /// 更新内存中的配置
-    /// </summary>
-    void UpdateConfig(AppConfig config);
-
-    /// <summary>
     /// 获取配置文件路径
     /// </summary>
     string ConfigFilePath { get; }

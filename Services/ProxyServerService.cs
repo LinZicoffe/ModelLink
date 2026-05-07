@@ -20,7 +20,6 @@ namespace claude_model_setting.Services;
 /// </summary>
 public sealed class ProxyServerService : IProxyServerService
 {
-    private const int Port = 5678;
     private const int MaxLogs = 100;
 
     private readonly IConfigService _configService;
@@ -60,7 +59,7 @@ public sealed class ProxyServerService : IProxyServerService
         {
             Args = [],
         });
-        builder.WebHost.UseUrls($"http://127.0.0.1:{Port}");
+        builder.WebHost.UseUrls($"http://127.0.0.1:{Constants.ProxyPort}");
         builder.Logging.ClearProviders();
 
         var app = builder.Build();
@@ -91,7 +90,7 @@ public sealed class ProxyServerService : IProxyServerService
             }
         });
 
-        Log.Information("代理服务器已启动，监听 127.0.0.1:{Port}", Port);
+        Log.Information("代理服务器已启动，监听 127.0.0.1:{Port}", Constants.ProxyPort);
     }
 
     /// <summary>
@@ -153,7 +152,7 @@ public sealed class ProxyServerService : IProxyServerService
                 Content = new StringContent(testBody, Encoding.UTF8, "application/json"),
             };
             req.Headers.Add("x-api-key", apiKey);
-            req.Headers.Add("anthropic-version", "2023-06-01");
+            req.Headers.Add("anthropic-version", Constants.AnthropicVersion);
 
             using var resp = await _httpClient.SendAsync(req);
             await WriteJson(context, resp.IsSuccessStatusCode

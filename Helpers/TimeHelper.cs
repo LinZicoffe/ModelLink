@@ -13,11 +13,4 @@ public static class TimeHelper
         return DateTime.Now.ToString("HH:mm:ss");
     }
 
-    /// <summary>
-    /// 获取带日期的完整时间格式
-    /// </summary>
-    public static string FormatFullTime()
-    {
-        return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-    }
 }

@@ -10,8 +10,15 @@
         Title="ModelLink" Height="720" Width="960"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize"
-        Background="#F8FAFC"
         NonClientAreaContent="{x:Null}">
+
+    <hc:Window.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#FFFBF7" Offset="0"/>
+            <GradientStop Color="#F5F7FB" Offset="0.55"/>
+            <GradientStop Color="#EEF1F6" Offset="1"/>
+        </LinearGradientBrush>
+    </hc:Window.Background>
 
     <hc:Window.Resources>
         <ResourceDictionary>
@@ -20,419 +27,902 @@
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <cvt:InvertedBoolToVisibilityConverter x:Key="InvBoolToVis"/>
-            <cvt:CountToVisibilityConverter x:Key="CountToVis"/>
+            <cvt:IndexToBrushConverter x:Key="IndexToBrush"/>
+
+            <!-- 主窗口局部隐式样式：避免全局 App 级 hc:TextBox 样式污染其它窗口 -->
+            <Style TargetType="hc:TextBox" BasedOn="{StaticResource {x:Type hc:TextBox}}">
+                <Setter Property="Padding" Value="12,9"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="MinHeight" Value="40"/>
+                <Setter Property="Background" Value="#FAFBFC"/>
+                <Setter Property="BorderBrush" Value="#E5E7EB"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Foreground" Value="#1F2937"/>
+                <Setter Property="hc:BorderElement.CornerRadius" Value="10"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                    </Trigger>
+                    <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                        <Setter Property="BorderBrush" Value="#D97757"/>
+                        <Setter Property="Background" Value="#FFFFFF"/>
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.25" Color="#D97757"/>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- 页面进入动画：淡入 + 上移 -->
+            <Storyboard x:Key="PageEnterAnim">
+                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                 From="0" To="1" Duration="0:0:0.18"/>
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                 From="6" To="0" Duration="0:0:0.22"/>
+            </Storyboard>
         </ResourceDictionary>
     </hc:Window.Resources>
 
-    <DockPanel>
-        <!-- 系统托盘图标 -->
-        <hc:NotifyIcon Token="ModelLinkTray" Text="ModelLink - Claude Desktop 代理"
-                       Icon="pack://application:,,,/Assets/tray_icon.ico">
-            <hc:NotifyIcon.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="显示窗口" Click="ShowWindow_Click"/>
-                    <MenuItem Header="退出" Click="Exit_Click"/>
-                </ContextMenu>
-            </hc:NotifyIcon.ContextMenu>
-            <hc:Interaction.Triggers>
-                <hc:EventTrigger EventName="Click">
-                    <hc:EventToCommand Command="{Binding ShowWindowCommand}"/>
-                </hc:EventTrigger>
-            </hc:Interaction.Triggers>
-        </hc:NotifyIcon>
+    <Grid>
+        <!-- 装饰：右上方品牌橙径向光斑 -->
+        <Border IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Width="520" Height="420" Margin="0,-120,-160,0" Opacity="0.45">
+            <Border.Background>
+                <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5"
+                                     RadiusX="0.5" RadiusY="0.5">
+                    <GradientStop Color="#33D97757" Offset="0"/>
+                    <GradientStop Color="#00D97757" Offset="1"/>
+                </RadialGradientBrush>
+            </Border.Background>
+        </Border>
+        <!-- 装饰：左下方蓝紫色光斑 -->
+        <Border IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Width="420" Height="380" Margin="-150,0,0,-120" Opacity="0.35">
+            <Border.Background>
+                <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5"
+                                     RadiusX="0.5" RadiusY="0.5">
+                    <GradientStop Color="#33A78BFA" Offset="0"/>
+                    <GradientStop Color="#00A78BFA" Offset="1"/>
+                </RadialGradientBrush>
+            </Border.Background>
+        </Border>
 
-        <!-- ===== 顶部导航栏（标题 + Tab + 状态） ===== -->
-        <Border DockPanel.Dock="Top" Background="#FFFFFF" Padding="0,0,0,0">
-            <Border.Clip>
-                <RectangleGeometry RadiusX="0" RadiusY="0">
-                    <RectangleGeometry.Rect>
-                        <Rect X="0" Y="0" Width="2000" Height="200"/>
-                    </RectangleGeometry.Rect>
-                </RectangleGeometry>
-            </Border.Clip>
+        <DockPanel>
+            <!-- 系统托盘图标 -->
+            <hc:NotifyIcon Token="ModelLinkTray" Text="ModelLink - Claude Desktop 代理"
+                           Icon="pack://application:,,,/Assets/tray_icon.ico">
+                <hc:NotifyIcon.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="显示窗口" Click="ShowWindow_Click"/>
+                        <MenuItem Header="退出" Click="Exit_Click"/>
+                    </ContextMenu>
+                </hc:NotifyIcon.ContextMenu>
+                <hc:Interaction.Triggers>
+                    <hc:EventTrigger EventName="Click">
+                        <hc:EventToCommand Command="{Binding ShowWindowCommand}"/>
+                    </hc:EventTrigger>
+                </hc:Interaction.Triggers>
+            </hc:NotifyIcon>
 
-            <!-- 自定义标题栏：可拖动 -->
-            <Border Background="#FFFFFF" MouseLeftButtonDown="Header_MouseDown"
-                    Height="48" VerticalAlignment="Top">
+            <!-- ===== 顶部导航栏：玻璃感 ===== -->
+            <Border DockPanel.Dock="Top" Height="64" VerticalAlignment="Top"
+                    BorderBrush="#0F172A14" BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="Header_MouseDown">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FAFFFFFF" Offset="0"/>
+                        <GradientStop Color="#E6FFFFFF" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
                 <Grid Margin="24,0">
-                    <!-- 左：品牌 -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="28" Height="28" CornerRadius="6" Background="#D97757"
-                                Margin="0,0,10,0">
-                            <TextBlock Text="M" Foreground="White" FontSize="14" FontWeight="Bold"
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 左：品牌区 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="34" Height="34" CornerRadius="9"
+                                Background="{StaticResource BrandGradient}" Margin="0,0,12,0">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="14" ShadowDepth="3" Opacity="0.4" Color="#D97757"/>
+                            </Border.Effect>
+                            <TextBlock Text="M" Foreground="White" FontSize="17" FontWeight="Bold"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock Text="ModelLink" FontSize="15" FontWeight="SemiBold"
-                                   Foreground="#1F2937" VerticalAlignment="Center"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="ModelLink" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="#1F2937"/>
+                            <TextBlock Text="Claude Desktop Proxy" FontSize="11"
+                                       Foreground="#9CA3AF" Margin="0,1,0,0"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- 中：Tab 导航 -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
-                                VerticalAlignment="Center">
-                        <RadioButton x:Name="TabProviders" GroupName="NavTab" IsChecked="True"
-                                     Content="服务商管理" Style="{StaticResource TabButtonStyle}"
-                                     Checked="TabProviders_Checked"/>
-                        <RadioButton x:Name="TabSettings" GroupName="NavTab"
-                                     Content="系统设置" Style="{StaticResource TabButtonStyle}"
-                                     Checked="TabSettings_Checked"/>
-                        <RadioButton x:Name="TabLogs" GroupName="NavTab"
-                                     Content="请求日志" Style="{StaticResource TabButtonStyle}"
-                                     Checked="TabLogs_Checked"/>
-                    </StackPanel>
+                    <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Background="#F1F4F8" CornerRadius="999" Padding="3">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="TabProviders" GroupName="NavTab" IsChecked="True"
+                                         Content="服务商管理" Tag="&#xE716;"
+                                         Style="{StaticResource TabButtonStyle}"
+                                         Checked="TabProviders_Checked"/>
+                            <RadioButton x:Name="TabSettings" GroupName="NavTab"
+                                         Content="系统设置" Tag="&#xE713;"
+                                         Style="{StaticResource TabButtonStyle}"
+                                         Checked="TabSettings_Checked"/>
+                            <RadioButton x:Name="TabLogs" GroupName="NavTab"
+                                         Content="请求日志" Tag="&#xE9D9;"
+                                         Style="{StaticResource TabButtonStyle}"
+                                         Checked="TabLogs_Checked"/>
+                        </StackPanel>
+                    </Border>
 
-                    <!-- 右：状态指示 -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                VerticalAlignment="Center">
-                        <Ellipse Width="7" Height="7" Fill="#22C55E" VerticalAlignment="Center"
-                                 Margin="0,0,6,0"/>
-                        <TextBlock Text="运行中" FontSize="12" Foreground="#22C55E"
-                                   VerticalAlignment="Center" FontWeight="Medium"/>
-                    </StackPanel>
+                    <!-- 右：代理运行状态（绑定 MainViewModel.IsServerRunning） -->
+                    <Border Grid.Column="2" VerticalAlignment="Center"
+                            CornerRadius="999" Padding="12,5">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F0FDF4"/>
+                                <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsServerRunning}" Value="False">
+                                        <Setter Property="Background" Value="#FEF2F2"/>
+                                        <Setter Property="BorderBrush" Value="#FECACA"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="8" Height="8" Margin="0,0,7,0" VerticalAlignment="Center">
+                                <!-- 未运行时静态红点 -->
+                                <Ellipse Width="8" Height="8" Fill="#EF4444"
+                                         Visibility="{Binding IsServerRunning, Converter={StaticResource InvBoolToVis}}"/>
+                                <!-- 运行中：实心点 + 呼吸涟漪 -->
+                                <Grid Visibility="{Binding IsServerRunning, Converter={StaticResource BoolToVis}}">
+                                    <Ellipse Fill="#22C55E" Width="8" Height="8"/>
+                                    <Ellipse Fill="#22C55E" Width="8" Height="8" Opacity="0.6">
+                                        <Ellipse.Triggers>
+                                            <EventTrigger RoutedEvent="Loaded">
+                                                <BeginStoryboard>
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.Opacity)"
+                                                                         From="0.55" To="0"
+                                                                         AutoReverse="True"
+                                                                         Duration="0:0:0.85"/>
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                                         From="1" To="2.2"
+                                                                         AutoReverse="True"
+                                                                         Duration="0:0:0.85"/>
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                         From="1" To="2.2"
+                                                                         AutoReverse="True"
+                                                                         Duration="0:0:0.85"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Ellipse.Triggers>
+                                        <Ellipse.RenderTransform>
+                                            <ScaleTransform CenterX="4" CenterY="4" ScaleX="1" ScaleY="1"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                </Grid>
+                            </Grid>
+                            <TextBlock FontSize="12" FontWeight="SemiBold"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="运行中"/>
+                                        <Setter Property="Foreground" Value="#16A34A"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsServerRunning}" Value="False">
+                                                <Setter Property="Text" Value="未运行"/>
+                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Border>
-        </Border>
 
-        <!-- ===== 内容区 ===== -->
-        <Grid>
-            <!-- ======== 页面 0: 服务商管理 ======== -->
-            <DockPanel x:Name="PageProviders">
-                <!-- 底部操作栏 -->
-                <Border DockPanel.Dock="Bottom" Background="#FFFFFF"
-                        Padding="32,18" BorderBrush="#F0F0F0" BorderThickness="0,1,0,0">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Content="保存配置" Command="{Binding SaveConfigCommand}"
-                                Style="{StaticResource ButtonGhost}"
-                                Width="150" Height="38" Margin="0,0,12,0"/>
-                        <Button Content="应用到 Claude Desktop" Command="{Binding ApplyToClaudeCommand}"
-                                Style="{StaticResource ButtonPrimary}"
-                                Width="210" Height="38"/>
-                    </StackPanel>
-                </Border>
+            <!-- ===== 内容区 ===== -->
+            <Grid>
+                <!-- ======== 页面 0: 服务商管理 ======== -->
+                <DockPanel x:Name="PageProviders" RenderTransformOrigin="0.5,0.5">
+                    <DockPanel.RenderTransform>
+                        <TranslateTransform Y="0"/>
+                    </DockPanel.RenderTransform>
 
-                <!-- 滚动内容 -->
-                <hc:ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="32,28,32,0" MaxWidth="820" HorizontalAlignment="Center">
-                        <!-- 空状态 -->
-                        <StackPanel Margin="0,80,0,0"
-                                    Visibility="{Binding HasProviders, Converter={StaticResource InvBoolToVis}}">
-                            <Border Width="80" Height="80" CornerRadius="20" Background="#FFF7ED"
-                                    HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE774;" FontSize="36" Foreground="#D97757" Opacity="0.6"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           FontFamily="Segoe MDL2 Assets"/>
-                            </Border>
-                            <TextBlock Text="还没有配置服务商" HorizontalAlignment="Center"
-                                       FontSize="17" FontWeight="SemiBold" Foreground="#1F2937"
-                                       Margin="0,20,0,0"/>
-                            <TextBlock HorizontalAlignment="Center" TextAlignment="Center"
-                                       FontSize="13" Foreground="#9CA3AF" Margin="0,8,0,0">
-                                <Run Text="点击下方按钮添加你的第一个 API 服务商"/><LineBreak/>
-                                <Run Text="配置后即可将第三方模型映射到 Claude Desktop"/>
-                            </TextBlock>
-                            <Button Content="添加服务商" Command="{Binding AddProviderCommand}"
+                    <!-- 底部操作栏 -->
+                    <Border DockPanel.Dock="Bottom" Style="{StaticResource BottomBar}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="保存配置" Command="{Binding SaveConfigCommand}"
+                                    Style="{StaticResource ButtonGhost}"
+                                    Width="150" Height="40" Margin="0,0,12,0"/>
+                            <Button Content="应用到 Claude Desktop" Command="{Binding ApplyToClaudeCommand}"
                                     Style="{StaticResource ButtonPrimary}"
-                                    Width="180" Height="40" Margin="0,28,0,0"
-                                    HorizontalAlignment="Center"/>
+                                    Width="220" Height="42"/>
                         </StackPanel>
+                    </Border>
 
-                        <!-- Provider 卡片列表 -->
-                        <ItemsControl ItemsSource="{Binding Providers}"
-                                      Visibility="{Binding HasProviders, Converter={StaticResource BoolToVis}}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:ProviderViewModel}">
-                                    <Border Style="{StaticResource ProviderCard}">
-                                        <StackPanel>
-                                            <!-- 顶部颜色条 -->
-                                            <Border Height="4" CornerRadius="12,12,0,0"
-                                                    Background="{Binding AccentBrush}"/>
-                                            <StackPanel Margin="24,20,24,24">
-                                                <!-- 卡片标题行 -->
-                                                <DockPanel Margin="0,0,0,20">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Ellipse Width="10" Height="10"
-                                                                 Fill="{Binding AccentBrush}"
-                                                                 VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                                        <TextBlock Text="{Binding DisplayTitle}"
-                                                                   FontSize="16" FontWeight="SemiBold"
-                                                                   Foreground="#1F2937"/>
-                                                        <Border Background="#F1F5F9" CornerRadius="4"
-                                                                Padding="8,2" Margin="10,0,0,0"
-                                                                VerticalAlignment="Center">
-                                                            <TextBlock FontSize="11" Foreground="#6B7280">
-                                                                <TextBlock.Text>
-                                                                    <MultiBinding StringFormat="{}{0} 个模型">
-                                                                        <Binding Path="Models.Count"/>
-                                                                    </MultiBinding>
-                                                                </TextBlock.Text>
-                                                            </TextBlock>
+                    <!-- 滚动内容 -->
+                    <hc:ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="32,28,32,0" MaxWidth="820" HorizontalAlignment="Center">
+                            <!-- 空状态 -->
+                            <StackPanel Margin="0,80,0,0"
+                                        Visibility="{Binding HasProviders, Converter={StaticResource InvBoolToVis}}">
+                                <Grid Width="96" Height="96" HorizontalAlignment="Center">
+                                    <Ellipse>
+                                        <Ellipse.Fill>
+                                            <RadialGradientBrush>
+                                                <GradientStop Color="#FFE4D2" Offset="0"/>
+                                                <GradientStop Color="#FFF7ED" Offset="1"/>
+                                            </RadialGradientBrush>
+                                        </Ellipse.Fill>
+                                        <Ellipse.Effect>
+                                            <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.5" Color="#FFD0B0"/>
+                                        </Ellipse.Effect>
+                                    </Ellipse>
+                                    <TextBlock Text="&#xE774;" FontSize="40" Foreground="#D97757"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontFamily="Segoe MDL2 Assets"/>
+                                </Grid>
+                                <TextBlock Text="还没有配置服务商" HorizontalAlignment="Center"
+                                           FontSize="18" FontWeight="SemiBold" Foreground="#1F2937"
+                                           Margin="0,20,0,0"/>
+                                <TextBlock HorizontalAlignment="Center" TextAlignment="Center"
+                                           FontSize="13" Foreground="#9CA3AF" Margin="0,8,0,0"
+                                           LineHeight="20">
+                                    <Run Text="点击下方按钮添加你的第一个 API 服务商"/><LineBreak/>
+                                    <Run Text="配置后即可将第三方模型映射到 Claude Desktop"/>
+                                </TextBlock>
+                                <Button Content="添加服务商" Command="{Binding AddProviderCommand}"
+                                        Style="{StaticResource ButtonPrimary}"
+                                        Width="180" Height="42" Margin="0,28,0,0"
+                                        HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Provider 卡片列表 -->
+                            <ItemsControl ItemsSource="{Binding Providers}"
+                                          Visibility="{Binding HasProviders, Converter={StaticResource BoolToVis}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:ProviderViewModel}">
+                                        <Border Style="{StaticResource ProviderCard}" ClipToBounds="True">
+                                            <StackPanel>
+                                                <!-- ===== Hero 渐变头部 ===== -->
+                                                <Border Height="60">
+                                                    <Grid>
+                                                        <!-- IndexToBrush 上色层 -->
+                                                        <Border Background="{Binding Index, Converter={StaticResource IndexToBrush}}"/>
+                                                        <!-- 高光叠层（白色 → 透明） -->
+                                                        <Border>
+                                                            <Border.Background>
+                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                    <GradientStop Color="#33FFFFFF" Offset="0"/>
+                                                                    <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                                                </LinearGradientBrush>
+                                                            </Border.Background>
                                                         </Border>
-                                                    </StackPanel>
-                                                    <Button DockPanel.Dock="Right" Content="&#xE74D;"
-                                                            FontFamily="Segoe MDL2 Assets"
-                                                            Style="{StaticResource ButtonIcon}"
-                                                            Click="DeleteProvider_Click"/>
-                                                </DockPanel>
+                                                        <!-- 轻微暗化 (右下) -->
+                                                        <Border>
+                                                            <Border.Background>
+                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                    <GradientStop Color="#00000000" Offset="0"/>
+                                                                    <GradientStop Color="#22000000" Offset="1"/>
+                                                                </LinearGradientBrush>
+                                                            </Border.Background>
+                                                        </Border>
 
-                                                <!-- API 地址 -->
-                                                <hc:TextBox Text="{Binding TargetUrl, UpdateSourceTrigger=PropertyChanged}"
-                                                            hc:InfoElement.Title="API 地址"
-                                                            hc:InfoElement.TitlePlacement="Top"
-                                                            hc:InfoElement.Placeholder="https://api.deepseek.com/anthropic"
-                                                            hc:InfoElement.ShowClearButton="True"
-                                                            Margin="0,0,0,14"/>
+                                                        <!-- Hero 内容 -->
+                                                        <Grid Margin="20,0">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
 
-                                                <!-- API 密钥 -->
-                                                <hc:TextBox Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}"
-                                                            hc:InfoElement.Title="API 密钥"
-                                                            hc:InfoElement.TitlePlacement="Top"
-                                                            hc:InfoElement.Placeholder="sk-xxx"
-                                                            hc:InfoElement.ShowClearButton="True"
-                                                            Margin="0,0,0,20"/>
+                                                            <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                                                        VerticalAlignment="Center">
+                                                                <Border Width="28" Height="28" CornerRadius="8"
+                                                                        Background="#33FFFFFF" Margin="0,0,12,0">
+                                                                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                                                                               Text="&#xE7A8;" FontSize="14"
+                                                                               Foreground="#FFFFFF"
+                                                                               HorizontalAlignment="Center"
+                                                                               VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding DisplayTitle}"
+                                                                           FontSize="16" FontWeight="SemiBold"
+                                                                           Foreground="#FFFFFF"
+                                                                           VerticalAlignment="Center"/>
+                                                                <Border Background="#33FFFFFF" CornerRadius="999"
+                                                                        Padding="9,3" Margin="12,0,0,0"
+                                                                        VerticalAlignment="Center">
+                                                                    <TextBlock FontSize="11" FontWeight="Medium"
+                                                                               Foreground="#FFFFFF">
+                                                                        <TextBlock.Text>
+                                                                            <MultiBinding StringFormat="{}{0} 个模型">
+                                                                                <Binding Path="Models.Count"/>
+                                                                            </MultiBinding>
+                                                                        </TextBlock.Text>
+                                                                    </TextBlock>
+                                                                </Border>
+                                                            </StackPanel>
 
-                                                <!-- 分隔线 -->
-                                                <Border Height="1" Background="#F3F4F6" Margin="0,0,0,16"/>
+                                                            <Button Grid.Column="1" Content="&#xE74D;"
+                                                                    FontFamily="Segoe MDL2 Assets"
+                                                                    Style="{StaticResource ButtonIconLight}"
+                                                                    VerticalAlignment="Center"
+                                                                    Command="{Binding DataContext.DeleteProviderCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Border>
 
-                                                <!-- 模型列表标题 + 测试按钮 -->
-                                                <DockPanel Margin="0,0,0,12">
-                                                    <TextBlock Text="模型映射" FontSize="14" FontWeight="SemiBold"
-                                                               Foreground="#1F2937" VerticalAlignment="Center"/>
-                                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                                        <hc:LoadingCircle Width="14" Height="14" Margin="0,0,8,0"
-                                                                          Visibility="{Binding IsTesting, Converter={StaticResource BoolToVis}}"/>
-                                                        <Button Content="测试连接" Command="{Binding TestCommand}"
-                                                                Style="{StaticResource ButtonSmall}"/>
-                                                    </StackPanel>
-                                                </DockPanel>
+                                                <!-- ===== 卡片主体 ===== -->
+                                                <StackPanel Margin="24,22,24,24">
+                                                    <!-- API 地址 -->
+                                                    <hc:TextBox Text="{Binding TargetUrl, UpdateSourceTrigger=PropertyChanged}"
+                                                                hc:InfoElement.Title="API 地址"
+                                                                hc:InfoElement.TitlePlacement="Top"
+                                                                hc:InfoElement.Placeholder="https://api.deepseek.com/anthropic"
+                                                                hc:InfoElement.ShowClearButton="True"
+                                                                Margin="0,0,0,14"/>
 
-                                                <!-- 测试结果 -->
-                                                <Border CornerRadius="8" Padding="14,10" Margin="0,0,0,12"
-                                                        Visibility="{Binding HasTestResult, Converter={StaticResource BoolToVis}}">
+                                                    <!-- API 密钥 -->
+                                                    <hc:TextBox Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}"
+                                                                hc:InfoElement.Title="API 密钥"
+                                                                hc:InfoElement.TitlePlacement="Top"
+                                                                hc:InfoElement.Placeholder="sk-xxx"
+                                                                hc:InfoElement.ShowClearButton="True"
+                                                                Margin="0,0,0,20"/>
+
+                                                    <!-- 分隔线 -->
+                                                    <Border Height="1" Background="#F3F4F6" Margin="0,0,0,18"/>
+
+                                                    <!-- 模型列表标题 + 测试按钮 -->
+                                                    <DockPanel Margin="0,0,0,12">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="&#xE950;" FontFamily="Segoe MDL2 Assets"
+                                                                       FontSize="13" Foreground="#D97757"
+                                                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="模型映射" FontSize="14" FontWeight="SemiBold"
+                                                                       Foreground="#1F2937" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                                            <hc:LoadingCircle Width="14" Height="14" Margin="0,0,8,0"
+                                                                              Visibility="{Binding IsTesting, Converter={StaticResource BoolToVis}}"/>
+                                                            <Button Content="测试连接" Command="{Binding TestCommand}"
+                                                                    Style="{StaticResource ButtonSmall}"/>
+                                                        </StackPanel>
+                                                    </DockPanel>
+
+                                                    <!-- 测试结果横幅（图标卡片化 + 左色条） -->
+                                                    <Border Visibility="{Binding HasTestResult, Converter={StaticResource BoolToVis}}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border" BasedOn="{StaticResource TestResultBox}">
+                                                                <Setter Property="Background" Value="#FEF2F2"/>
+                                                                <Setter Property="BorderBrush" Value="#FECACA"/>
+                                                                <Setter Property="BorderThickness" Value="1,1,1,1"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                        <Setter Property="Background" Value="#F0FDF4"/>
+                                                                        <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="3"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Grid.Column="0" CornerRadius="2"
+                                                                    Margin="-14,-12,8,-12">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="#EF4444"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                                <Setter Property="Background" Value="#22C55E"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                            </Border>
+                                                            <Border Grid.Column="1" Width="22" Height="22" CornerRadius="11"
+                                                                    Margin="0,0,10,0" VerticalAlignment="Center">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                                            <Setter Property="Text" Value="&#xE711;"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                                                                    <Setter Property="Text" Value="&#xE73E;"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                            </Border>
+                                                            <TextBlock Grid.Column="2" Text="{Binding TestResult}"
+                                                                       FontSize="12" VerticalAlignment="Center"
+                                                                       TextWrapping="Wrap">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="#B91C1C"/>
+                                                                        <Setter Property="FontWeight" Value="Medium"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#15803D"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Grid>
+                                                    </Border>
+
+                                                    <!-- 模型行列表 -->
+                                                    <ItemsControl ItemsSource="{Binding Models}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate DataType="{x:Type vm:ModelEntryViewModel}">
+                                                                <Border Style="{StaticResource ModelRow}">
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Ellipse Grid.Column="0" Width="6" Height="6"
+                                                                                 VerticalAlignment="Center" Margin="2,0,12,0">
+                                                                            <Ellipse.Fill>
+                                                                                <Binding Path="DataContext.Index"
+                                                                                         RelativeSource="{RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}"
+                                                                                         Converter="{StaticResource IndexToBrush}"/>
+                                                                            </Ellipse.Fill>
+                                                                        </Ellipse>
+                                                                        <hc:TextBox Grid.Column="1"
+                                                                                    Style="{StaticResource ModelRowTextBox}"
+                                                                                    Text="{Binding ModelName, UpdateSourceTrigger=PropertyChanged}"
+                                                                                    hc:InfoElement.Placeholder="如 deepseek-v4-pro"/>
+                                                                        <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                                                    VerticalAlignment="Center" Margin="12,0">
+                                                                            <ToggleButton IsChecked="{Binding Is1mEnabled}"
+                                                                                          VerticalAlignment="Center"
+                                                                                          Style="{StaticResource ToggleButtonSwitch}"/>
+                                                                            <TextBlock Text="1M 长上下文" FontSize="11"
+                                                                                       Foreground="#9CA3AF"
+                                                                                       VerticalAlignment="Center"
+                                                                                       Margin="8,0,0,0"/>
+                                                                        </StackPanel>
+                                                                        <Button Grid.Column="3" Content="&#xE711;"
+                                                                                FontFamily="Segoe MDL2 Assets"
+                                                                                FontSize="12"
+                                                                                Style="{StaticResource ButtonIcon}"
+                                                                                Width="28" Height="28"
+                                                                                Command="{Binding DataContext.DeleteModelCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                CommandParameter="{Binding}"/>
+                                                                    </Grid>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+
+                                                    <!-- 添加模型 -->
+                                                    <Button Margin="0,4,0,0"
+                                                            Command="{Binding AddModelCommand}"
+                                                            HorizontalAlignment="Left"
+                                                            BorderThickness="0" Background="Transparent"
+                                                            Cursor="Hand" Foreground="#D97757" Padding="0">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        Padding="6,4">
+                                                                    <ContentPresenter/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets"
+                                                                       FontSize="11" Margin="0,0,6,0"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text="添加模型" FontSize="12" FontWeight="Medium"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- 添加服务商按钮 -->
+                            <Button Content="添加服务商" Command="{Binding AddProviderCommand}"
+                                    Style="{StaticResource AddProviderButton}"
+                                    Margin="0,0,0,32"
+                                    Visibility="{Binding HasProviders, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                    </hc:ScrollViewer>
+                </DockPanel>
+
+                <!-- ======== 页面 1: 系统设置 ======== -->
+                <hc:ScrollViewer x:Name="PageSettings" VerticalScrollBarVisibility="Auto" Visibility="Collapsed"
+                                 RenderTransformOrigin="0.5,0.5">
+                    <hc:ScrollViewer.RenderTransform>
+                        <TranslateTransform Y="0"/>
+                    </hc:ScrollViewer.RenderTransform>
+                    <StackPanel Margin="32,28,32,32" MaxWidth="820" HorizontalAlignment="Center">
+                        <DockPanel Margin="0,0,0,24">
+                            <StackPanel>
+                                <TextBlock Text="系统设置" Style="{StaticResource PageTitle}"/>
+                                <TextBlock Text="管理代理服务器、启动选项和应用信息" Margin="0,4,0,0"
+                                           Style="{StaticResource DescText}"/>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <!-- 启动设置 -->
+                        <hc:Card Style="{StaticResource GroupCard}">
+                            <StackPanel Margin="22">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                                    <Border Width="34" Height="34" CornerRadius="9"
+                                            Background="#EFF6FF" Margin="0,0,12,0">
+                                        <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="16" Foreground="#3B82F6"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="启动设置" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock Text="控制应用如何随系统启动"
+                                                   Style="{StaticResource DescText}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Border Background="#FAFBFC" CornerRadius="10" Padding="16,14"
+                                        BorderBrush="#EEF0F3" BorderThickness="1">
+                                    <DockPanel>
+                                        <StackPanel>
+                                            <TextBlock Text="开机自启动" FontSize="14" FontWeight="Medium"
+                                                       Foreground="#1F2937"/>
+                                            <TextBlock Text="系统启动时自动运行 ModelLink"
+                                                       Style="{StaticResource DescText}" Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                        <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding IsAutoStartEnabled}"
+                                                      VerticalAlignment="Center"
+                                                      Style="{StaticResource ToggleButtonSwitch}"/>
+                                    </DockPanel>
+                                </Border>
+                            </StackPanel>
+                        </hc:Card>
+
+                        <!-- 代理设置 -->
+                        <hc:Card Style="{StaticResource GroupCard}">
+                            <StackPanel Margin="22">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                                    <Border Width="34" Height="34" CornerRadius="9"
+                                            Background="#FFF7ED" Margin="0,0,12,0">
+                                        <TextBlock Text="&#xE968;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="16" Foreground="#D97757"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="代理服务器" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock Text="本地 HTTP 代理监听配置"
+                                                   Style="{StaticResource DescText}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Background="#FAFBFC" CornerRadius="10" Padding="16,14"
+                                            BorderBrush="#EEF0F3" BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="监听地址" FontSize="12" Foreground="#6B7280"/>
+                                            <TextBlock Text="127.0.0.1" FontSize="18" FontWeight="SemiBold"
+                                                       Foreground="#1F2937" Margin="0,6,0,0"
+                                                       FontFamily="Consolas, Cascadia Mono, Segoe UI"/>
+                                            <TextBlock Text="仅本机访问" Style="{StaticResource DescText}"
+                                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="2" CornerRadius="10" Padding="16,14"
+                                            BorderThickness="1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FFF7ED" Offset="0"/>
+                                                <GradientStop Color="#FFE4D2" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <Border.BorderBrush>
+                                            <SolidColorBrush Color="#FED7AA"/>
+                                        </Border.BorderBrush>
+                                        <StackPanel>
+                                            <TextBlock Text="监听端口" FontSize="12" Foreground="#9A6B4F"/>
+                                            <TextBlock Text="5678" FontSize="18" FontWeight="SemiBold"
+                                                       Foreground="#C45E3E" Margin="0,6,0,0"
+                                                       FontFamily="Consolas, Cascadia Mono, Segoe UI"/>
+                                            <TextBlock Text="HTTP 代理端口" FontSize="12" Foreground="#9A6B4F"
+                                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </hc:Card>
+
+                        <!-- 关于 -->
+                        <hc:Card Style="{StaticResource GroupCard}">
+                            <StackPanel Margin="22">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                                    <Border Width="34" Height="34" CornerRadius="9"
+                                            Background="#F5F3FF" Margin="0,0,12,0">
+                                        <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="16" Foreground="#8B5CF6"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="关于" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock Text="应用版本与版权信息"
+                                                   Style="{StaticResource DescText}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <DockPanel Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="ModelLink" FontSize="16" FontWeight="SemiBold"
+                                                       Foreground="#1F2937" VerticalAlignment="Center"/>
+                                            <Border Background="#F1F5F9" CornerRadius="4"
+                                                    Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="v1.0" FontSize="11" Foreground="#6B7280"
+                                                           FontWeight="Medium"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Claude Desktop 第三方模型代理管理工具"
+                                                   Style="{StaticResource DescText}" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                                                RenderTransformOrigin="0.5,0.5">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="RenderTransform">
+                                                            <Setter.Value>
+                                                                <ScaleTransform ScaleX="1.06" ScaleY="1.06"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <hc:Shield Subject=".NET" Status="8.0" Color="#512BD4" Margin="0,0,6,0"/>
+                                        <hc:Shield Subject="WPF" Status="Desktop" Color="#D97757"/>
+                                    </StackPanel>
+                                </DockPanel>
+                                <Border Height="1" Background="#F3F4F6" Margin="0,12,0,12"/>
+                                <TextBlock Text="林子与咖啡 · 免费软件，不可商业化"
+                                           FontSize="12" Foreground="#9CA3AF"/>
+                            </StackPanel>
+                        </hc:Card>
+                    </StackPanel>
+                </hc:ScrollViewer>
+
+                <!-- ======== 页面 2: 请求日志 ======== -->
+                <DockPanel x:Name="PageLogs" Visibility="Collapsed"
+                           RenderTransformOrigin="0.5,0.5">
+                    <DockPanel.RenderTransform>
+                        <TranslateTransform Y="0"/>
+                    </DockPanel.RenderTransform>
+
+                    <StackPanel DockPanel.Dock="Top" Margin="32,28,32,0" MaxWidth="820" HorizontalAlignment="Center">
+                        <DockPanel Margin="0,0,0,18">
+                            <StackPanel>
+                                <TextBlock Text="请求日志" Style="{StaticResource PageTitle}"/>
+                                <TextBlock Text="实时查看 Claude Desktop 通过代理发送的请求"
+                                           Style="{StaticResource DescText}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="清空" Command="{Binding ClearLogsCommand}"
+                                        Style="{StaticResource ButtonSmall}" Margin="0,0,8,0"/>
+                                <Button Content="刷新" Command="{Binding RefreshLogsCommand}"
+                                        Style="{StaticResource ButtonPrimary}"
+                                        Height="34" MinWidth="80" FontSize="12"/>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <!-- 顶部统计胶囊（3 列） -->
+                        <Grid Margin="0,0,0,20"
+                              Visibility="{Binding HasLogs, Converter={StaticResource BoolToVis}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Style="{StaticResource StatBadge}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="22" Height="22" CornerRadius="6" Background="#F1F5F9"
+                                                Margin="0,0,8,0">
+                                            <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="11" Foreground="#6B7280"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="总请求" FontSize="12" Foreground="#6B7280"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="#1F2937"
+                                               Margin="0,8,0,0">
+                                        <TextBlock.Text>
+                                            <Binding Path="Logs.Count"/>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource StatBadge}"
+                                    BorderBrush="#BBF7D0" Background="#F0FDF4">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="22" Height="22" CornerRadius="6" Background="#DCFCE7"
+                                                Margin="0,0,8,0">
+                                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="11" Foreground="#16A34A"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="成功" FontSize="12" Foreground="#16A34A"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding LogSuccessCount}"
+                                               FontSize="22" FontWeight="Bold" Foreground="#15803D"
+                                               Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="4" Style="{StaticResource StatBadge}"
+                                    BorderBrush="#FECACA" Background="#FEF2F2">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="22" Height="22" CornerRadius="6" Background="#FEE2E2"
+                                                Margin="0,0,8,0">
+                                            <TextBlock Text="&#xE783;" FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="11" Foreground="#DC2626"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="失败" FontSize="12" Foreground="#DC2626"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding LogFailCount}"
+                                               FontSize="22" FontWeight="Bold" Foreground="#B91C1C"
+                                               Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+
+                    <hc:ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="32,0,32,32" MaxWidth="820" HorizontalAlignment="Center">
+                            <!-- 日志为空 -->
+                            <StackPanel Margin="0,40,0,0"
+                                        Visibility="{Binding HasLogs, Converter={StaticResource InvBoolToVis}}">
+                                <Grid Width="96" Height="96" HorizontalAlignment="Center">
+                                    <Ellipse>
+                                        <Ellipse.Fill>
+                                            <RadialGradientBrush>
+                                                <GradientStop Color="#E0E7FF" Offset="0"/>
+                                                <GradientStop Color="#F5F3FF" Offset="1"/>
+                                            </RadialGradientBrush>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <TextBlock Text="&#xE896;" FontSize="40" Foreground="#8B5CF6"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontFamily="Segoe MDL2 Assets"/>
+                                </Grid>
+                                <TextBlock Text="暂无请求日志" HorizontalAlignment="Center"
+                                           FontSize="18" FontWeight="SemiBold" Foreground="#1F2937"
+                                           Margin="0,20,0,0"/>
+                                <TextBlock Text="当 Claude Desktop 发送请求时，日志将在这里显示"
+                                           HorizontalAlignment="Center"
+                                           FontSize="13" Foreground="#9CA3AF" Margin="0,8,0,0"/>
+                            </StackPanel>
+
+                            <!-- 日志列表（卡片行） -->
+                            <ItemsControl ItemsSource="{Binding Logs}"
+                                          Visibility="{Binding HasLogs, Converter={StaticResource BoolToVis}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource LogRow}" ClipToBounds="True">
+                                            <Grid Height="56">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="4"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- 左侧状态色条 -->
+                                                <Border Grid.Column="0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#EF4444"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSuccess}" Value="True">
+                                                                    <Setter Property="Background" Value="#22C55E"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                </Border>
+
+                                                <!-- 时间 -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                            VerticalAlignment="Center" Margin="18,0,0,0">
+                                                    <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="12" Foreground="#9CA3AF"
+                                                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="{Binding Time}" FontSize="13"
+                                                               FontFamily="Consolas, Cascadia Mono, Segoe UI"
+                                                               Foreground="#374151" VerticalAlignment="Center"/>
+                                                </StackPanel>
+
+                                                <!-- 模型名 -->
+                                                <TextBlock Grid.Column="2" Text="{Binding Model}"
+                                                           FontSize="13" Foreground="#1F2937"
+                                                           VerticalAlignment="Center" Margin="20,0,12,0"
+                                                           TextTrimming="CharacterEllipsis"/>
+
+                                                <!-- 状态胶囊 -->
+                                                <Border Grid.Column="3" CornerRadius="999" Padding="10,4"
+                                                        VerticalAlignment="Center" Margin="0,0,16,0">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="#FEF2F2"/>
+                                                            <Setter Property="BorderBrush" Value="#FECACA"/>
+                                                            <Setter Property="BorderThickness" Value="1"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                                <DataTrigger Binding="{Binding IsSuccess}" Value="True">
                                                                     <Setter Property="Background" Value="#F0FDF4"/>
+                                                                    <Setter Property="BorderBrush" Value="#BBF7D0"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                                                   VerticalAlignment="Center" Margin="0,0,8,0">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="#EF4444"/>
-                                                                    <Setter Property="Text" Value="&#xE711;"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
-                                                                            <Setter Property="Foreground" Value="#22C55E"/>
-                                                                            <Setter Property="Text" Value="&#xE73E;"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                        <TextBlock Text="{Binding TestResult}" FontSize="12">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="#EF4444"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
-                                                                            <Setter Property="Foreground" Value="#16A34A"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <!-- 模型行列表 -->
-                                                <ItemsControl ItemsSource="{Binding Models}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate DataType="{x:Type vm:ModelEntryViewModel}">
-                                                            <Border Style="{StaticResource ModelRow}">
-                                                                <Grid>
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <TextBlock Grid.Column="0" Text="&#xE945;" FontFamily="Segoe MDL2 Assets"
-                                                                               FontSize="14" Foreground="#D97757" Opacity="0.5"
-                                                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                                                    <hc:TextBox Grid.Column="1"
-                                                                                Text="{Binding ModelName, UpdateSourceTrigger=PropertyChanged}"
-                                                                                hc:InfoElement.Placeholder="如 deepseek-v4-pro"
-                                                                                BorderThickness="0" Background="Transparent"
-                                                                                Padding="0"/>
-                                                                    <CheckBox Grid.Column="2" Content="1M"
-                                                                              IsChecked="{Binding Is1mEnabled}"
-                                                                              Margin="12,0" VerticalAlignment="Center"
-                                                                              FontSize="12"/>
-                                                                    <Button Grid.Column="3" Content="&#xE711;"
-                                                                            FontFamily="Segoe MDL2 Assets"
-                                                                            FontSize="12"
-                                                                            Style="{StaticResource ButtonIcon}"
-                                                                            Width="28" Height="28"
-                                                                            Click="DeleteModel_Click"/>
-                                                                </Grid>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-
-                                                <!-- 添加模型 -->
-                                                <Button Content="+ 添加模型" Margin="0,4,0,0"
-                                                        Command="{Binding AddModelCommand}"
-                                                        HorizontalAlignment="Left"
-                                                        FontSize="12" Opacity="0.7"
-                                                        BorderThickness="0" Background="Transparent"
-                                                        Cursor="Hand" Foreground="#D97757"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <!-- 添加服务商按钮 -->
-                        <Button Content="+ 添加服务商" Command="{Binding AddProviderCommand}"
-                                Style="{StaticResource AddProviderButton}"
-                                Margin="0,0,0,32"
-                                Visibility="{Binding HasProviders, Converter={StaticResource BoolToVis}}"/>
-                    </StackPanel>
-                </hc:ScrollViewer>
-            </DockPanel>
-
-            <!-- ======== 页面 1: 系统设置 ======== -->
-            <hc:ScrollViewer x:Name="PageSettings" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
-                <StackPanel Margin="32,28,32,32" MaxWidth="820" HorizontalAlignment="Center">
-                    <TextBlock Text="系统设置" Style="{StaticResource PageTitle}" Margin="0,0,0,24"/>
-
-                    <!-- 启动设置 -->
-                    <hc:Card Style="{StaticResource GroupCard}">
-                        <StackPanel Margin="24">
-                            <TextBlock Text="启动设置" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
-                            <DockPanel Margin="0,4">
-                                <StackPanel>
-                                    <TextBlock Text="开机自启动" FontSize="14" Foreground="#1F2937"/>
-                                    <TextBlock Text="系统启动时自动运行 ModelLink" Style="{StaticResource DescText}"
-                                               Margin="0,4,0,0"/>
-                                </StackPanel>
-                                <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding IsAutoStartEnabled}"
-                                              VerticalAlignment="Center"/>
-                            </DockPanel>
-                        </StackPanel>
-                    </hc:Card>
-
-                    <!-- 代理设置 -->
-                    <hc:Card Style="{StaticResource GroupCard}">
-                        <StackPanel Margin="24">
-                            <TextBlock Text="代理设置" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
-                            <DockPanel Margin="0,4">
-                                <StackPanel>
-                                    <TextBlock Text="监听地址" FontSize="14" Foreground="#1F2937"/>
-                                    <TextBlock Text="代理服务器绑定的网络接口" Style="{StaticResource DescText}"
-                                               Margin="0,4,0,0"/>
-                                </StackPanel>
-                                <hc:Shield DockPanel.Dock="Right" Subject="IP" Status="127.0.0.1" Color="#6B7280"
-                                           VerticalAlignment="Center"/>
-                            </DockPanel>
-                            <Border Height="1" Background="#F3F4F6" Margin="0,14"/>
-                            <DockPanel Margin="0,4">
-                                <StackPanel>
-                                    <TextBlock Text="监听端口" FontSize="14" Foreground="#1F2937"/>
-                                    <TextBlock Text="代理服务器监听的端口号" Style="{StaticResource DescText}"
-                                               Margin="0,4,0,0"/>
-                                </StackPanel>
-                                <hc:Shield DockPanel.Dock="Right" Subject="PORT" Status="5678" Color="#D97757"
-                                           VerticalAlignment="Center"/>
-                            </DockPanel>
-                        </StackPanel>
-                    </hc:Card>
-
-                    <!-- 关于 -->
-                    <hc:Card Style="{StaticResource GroupCard}">
-                        <StackPanel Margin="24">
-                            <TextBlock Text="关于" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock Text="ModelLink v1.0" FontSize="15" FontWeight="Medium"
-                                           Foreground="#1F2937" VerticalAlignment="Center"/>
-                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                    <hc:Shield Subject=".NET" Status="8.0" Color="#512BD4" Margin="0,0,6,0"/>
-                                    <hc:Shield Subject="WPF" Status="Desktop" Color="#D97757"/>
-                                </StackPanel>
-                            </DockPanel>
-                            <TextBlock Text="Claude Desktop 第三方模型代理管理工具"
-                                       Style="{StaticResource DescText}" Margin="0,0,0,4"/>
-                            <TextBlock Text="林子与咖啡 · 免费软件，不可商业化"
-                                       FontSize="12" Foreground="#9CA3AF" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </hc:Card>
-                </StackPanel>
-            </hc:ScrollViewer>
-
-            <!-- ======== 页面 2: 请求日志 ======== -->
-            <DockPanel x:Name="PageLogs" Visibility="Collapsed">
-                <StackPanel Margin="32,28,32,0" MaxWidth="820" HorizontalAlignment="Center">
-                    <DockPanel Margin="0,0,0,20">
-                        <TextBlock Text="请求日志" Style="{StaticResource PageTitle}"/>
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Button Content="清空" Command="{Binding ClearLogsCommand}"
-                                    Style="{StaticResource ButtonSmall}" Margin="0,0,8,0"/>
-                            <Button Content="刷新" Command="{Binding RefreshLogsCommand}"
-                                    Style="{StaticResource ButtonPrimary}"
-                                    Height="28" Padding="12,0" FontSize="12"/>
-                        </StackPanel>
-                    </DockPanel>
-                </StackPanel>
-
-                <hc:ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="32,0,32,32" MaxWidth="820" HorizontalAlignment="Center">
-                        <!-- 日志为空时 -->
-                        <StackPanel Margin="0,60,0,0"
-                                    Visibility="{Binding HasLogs, Converter={StaticResource InvBoolToVis}}">
-                            <Border Width="80" Height="80" CornerRadius="20" Background="#FFF7ED"
-                                    HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE896;" FontSize="36" Foreground="#D97757" Opacity="0.6"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           FontFamily="Segoe MDL2 Assets"/>
-                            </Border>
-                            <TextBlock Text="暂无请求日志" HorizontalAlignment="Center"
-                                       FontSize="16" FontWeight="SemiBold" Foreground="#1F2937"
-                                       Margin="0,20,0,0"/>
-                            <TextBlock Text="当 Claude Desktop 发送请求时，日志将在这里显示"
-                                       HorizontalAlignment="Center"
-                                       FontSize="13" Foreground="#9CA3AF" Margin="0,8,0,0"/>
-                        </StackPanel>
-
-                        <!-- 日志列表 -->
-                        <hc:Card Style="{StaticResource GroupCard}"
-                                 Visibility="{Binding HasLogs, Converter={StaticResource BoolToVis}}">
-                            <ListView ItemsSource="{Binding Logs}" MinHeight="340"
-                                      BorderThickness="0" Background="Transparent">
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem">
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                        <Setter Property="Padding" Value="14,10"/>
-                                        <Setter Property="BorderBrush" Value="#F3F4F6"/>
-                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    </Style>
-                                </ListView.ItemContainerStyle>
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn Header="时间" Width="110"
-                                                        DisplayMemberBinding="{Binding Time}"/>
-                                        <GridViewColumn Header="模型" Width="360"
-                                                        DisplayMemberBinding="{Binding Model}"/>
-                                        <GridViewColumn Header="状态" Width="110">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <Ellipse Width="8" Height="8" Margin="0,0,6,0">
+                                                        <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                                 Margin="0,0,6,0">
                                                             <Ellipse.Style>
                                                                 <Style TargetType="Ellipse">
                                                                     <Setter Property="Fill" Value="#EF4444"/>
@@ -444,50 +934,30 @@
                                                                 </Style>
                                                             </Ellipse.Style>
                                                         </Ellipse>
-                                                        <TextBlock Text="{Binding StatusText}" FontSize="12">
+                                                        <TextBlock Text="{Binding StatusText}" FontSize="11"
+                                                                   FontWeight="SemiBold">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="#6B7280"/>
+                                                                    <Setter Property="Foreground" Value="#B91C1C"/>
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsSuccess}" Value="False">
-                                                                            <Setter Property="Foreground" Value="#EF4444"/>
-                                                                            <Setter Property="FontWeight" Value="Medium"/>
+                                                                        <DataTrigger Binding="{Binding IsSuccess}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#15803D"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </TextBlock.Style>
                                                         </TextBlock>
                                                     </StackPanel>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                    </GridView>
-                                </ListView.View>
-                            </ListView>
-                        </hc:Card>
-
-                        <!-- 日志统计 -->
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0"
-                                    Visibility="{Binding HasLogs, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="{Binding LogSummary}" FontSize="12" Foreground="#6B7280"/>
-                            <TextBlock FontSize="12" Margin="16,0,0,0" Foreground="#22C55E">
-                                <TextBlock.Text>
-                                    <MultiBinding StringFormat="成功 {0}">
-                                        <Binding Path="LogSuccessCount"/>
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
-                            <TextBlock FontSize="12" Margin="16,0,0,0" Foreground="#EF4444">
-                                <TextBlock.Text>
-                                    <MultiBinding StringFormat="失败 {0}">
-                                        <Binding Path="LogFailCount"/>
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
-                    </StackPanel>
-                </hc:ScrollViewer>
-            </DockPanel>
-        </Grid>
-    </DockPanel>
+                    </hc:ScrollViewer>
+                </DockPanel>
+            </Grid>
+        </DockPanel>
+    </Grid>
 </hc:Window>

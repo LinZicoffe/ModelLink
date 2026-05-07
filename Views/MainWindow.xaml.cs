@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using claude_model_setting.ViewModels;
 
 namespace claude_model_setting.Views;
@@ -27,9 +29,15 @@ public partial class MainWindow : HandyControl.Controls.Window
     /// </summary>
     private void Header_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ChangedButton == MouseButton.Left)
+        if (e.ChangedButton != MouseButton.Left)
+            return;
+        try
         {
             DragMove();
+        }
+        catch
+        {
+            // 无标题栏拖动时偶发 Win32 异常，忽略即可
         }
     }
 
@@ -42,6 +50,7 @@ public partial class MainWindow : HandyControl.Controls.Window
         PageProviders.Visibility = Visibility.Visible;
         PageSettings.Visibility = Visibility.Collapsed;
         PageLogs.Visibility = Visibility.Collapsed;
+        PlayPageEnter(PageProviders);
     }
 
     /// <summary>
@@ -53,6 +62,7 @@ public partial class MainWindow : HandyControl.Controls.Window
         PageProviders.Visibility = Visibility.Collapsed;
         PageSettings.Visibility = Visibility.Visible;
         PageLogs.Visibility = Visibility.Collapsed;
+        PlayPageEnter(PageSettings);
     }
 
     /// <summary>
@@ -64,9 +74,26 @@ public partial class MainWindow : HandyControl.Controls.Window
         PageProviders.Visibility = Visibility.Collapsed;
         PageSettings.Visibility = Visibility.Collapsed;
         PageLogs.Visibility = Visibility.Visible;
+        PlayPageEnter(PageLogs);
 
         if (DataContext is MainViewModel vm)
             vm.RefreshLogsCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// 播放页面进入动画（淡入 + 上移）
+    /// </summary>
+    private void PlayPageEnter(FrameworkElement page)
+    {
+        if (TryFindResource("PageEnterAnim") is not Storyboard sbTemplate)
+            return;
+
+        page.BeginAnimation(UIElement.OpacityProperty, null);
+        if (page.RenderTransform is TranslateTransform tt)
+            tt.BeginAnimation(TranslateTransform.YProperty, null);
+
+        var clone = sbTemplate.Clone();
+        clone.Begin(page, HandoffBehavior.SnapshotAndReplace, isControllable: true);
     }
 
     /// <summary>
@@ -85,41 +112,5 @@ public partial class MainWindow : HandyControl.Controls.Window
     private void Exit_Click(object sender, RoutedEventArgs e)
     {
         Application.Current.Shutdown();
-    }
-
-    /// <summary>
-    /// 删除服务商
-    /// </summary>
-    private void DeleteProvider_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.DataContext is ProviderViewModel provider)
-        {
-            if (DataContext is MainViewModel vm)
-                vm.Providers.Remove(provider);
-        }
-    }
-
-    /// <summary>
-    /// 删除模型
-    /// </summary>
-    private void DeleteModel_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.DataContext is ModelEntryViewModel model)
-        {
-            var parent = TryFindParent<ItemsControl>(btn);
-            if (parent?.DataContext is ProviderViewModel provider)
-                provider.Models.Remove(model);
-        }
-    }
-
-    private static T? TryFindParent<T>(DependencyObject child) where T : DependencyObject
-    {
-        var parent = System.Windows.Media.VisualTreeHelper.GetParent(child);
-        while (parent != null)
-        {
-            if (parent is T result) return result;
-            parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
-        }
-        return null;
     }
 }

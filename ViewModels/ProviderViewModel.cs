@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Net.Http;
-using System.Windows.Media;
+using claude_model_setting.Helpers;
 using claude_model_setting.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,16 +12,6 @@ namespace claude_model_setting.ViewModels;
 /// </summary>
 public sealed partial class ProviderViewModel : ObservableObject
 {
-    private static readonly Brush[] AccentBrushes =
-    [
-        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D97757")),
-        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1890FF")),
-        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#52C41A")),
-        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#722ED1")),
-        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FAAD14")),
-        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#13C2C2")),
-    ];
-
     [ObservableProperty]
     private string _targetUrl = string.Empty;
 
@@ -42,8 +32,6 @@ public sealed partial class ProviderViewModel : ObservableObject
 
     public ObservableCollection<ModelEntryViewModel> Models { get; } = [];
 
-    public Brush AccentBrush => AccentBrushes[Index % AccentBrushes.Length];
-
     public string DisplayTitle => $"服务商 {Index + 1}";
     public bool HasTestResult => !string.IsNullOrEmpty(TestResult);
     public bool IsTestSuccess => TestResult.StartsWith("连接成功");
@@ -62,7 +50,6 @@ public sealed partial class ProviderViewModel : ObservableObject
 
     partial void OnIndexChanged(int value)
     {
-        OnPropertyChanged(nameof(AccentBrush));
         OnPropertyChanged(nameof(DisplayTitle));
     }
 
@@ -118,7 +105,7 @@ public sealed partial class ProviderViewModel : ObservableObject
                 Content = new StringContent(testBody, System.Text.Encoding.UTF8, "application/json"),
             };
             req.Headers.Add("authorization", $"Bearer {ApiKey}");
-            req.Headers.Add("anthropic-version", "2023-06-01");
+            req.Headers.Add("anthropic-version", Constants.AnthropicVersion);
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
             using var resp = await client.SendAsync(req);

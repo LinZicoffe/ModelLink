@@ -10,7 +10,7 @@ namespace claude_model_setting.Services;
 /// <summary>
 /// 配置文件读写服务
 /// </summary>
-public sealed class ConfigService : IConfigService
+public sealed class ConfigService : IConfigService, IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -84,20 +84,9 @@ public sealed class ConfigService : IConfigService
         }
     }
 
-    /// <summary>
-    /// 更新内存中的配置
-    /// </summary>
-    public void UpdateConfig(AppConfig config)
+    public void Dispose()
     {
-        _lock.Wait();
-        try
-        {
-            _config = config;
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        _lock.Dispose();
     }
 
     private static string GetConfigDir()

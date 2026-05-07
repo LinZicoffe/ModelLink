@@ -20,6 +20,7 @@
 - 系统托盘常驻，关闭窗口后代理继续运行
 - 请求日志（成功/失败状态指示 + 统计）
 - 开机自启动
+- 智能进程管理：精确识别 Anthropic Claude Desktop 进程，避免误杀同名进程（如 Claude Code）
 
 ## 技术栈
 
@@ -60,22 +61,24 @@ claude model setting/
 │   └── ApiResponse.cs            # API 响应封装
 ├── ViewModels/                   # MVVM ViewModel
 │   ├── MainViewModel.cs          # 主 VM（Tab 导航、配置 CRUD、日志）
-│   ├── ProviderViewModel.cs      # 服务商 VM（连接测试、模型管理、配色）
+│   ├── ProviderViewModel.cs      # 服务商 VM（连接测试、模型管理）
 │   └── ModelEntryViewModel.cs    # 模型条目 VM（名称、1M 开关）
 ├── Views/                        # MVVM View
 │   └── MainWindow.xaml / .cs     # 主窗口（顶部 Tab + 三页内容）
 ├── Converters/                   # WPF 值转换器
-│   ├── IndexToVisibilityConverter.cs         # 导航索引 → 页面可见性
-│   ├── InvertedBoolToVisibilityConverter.cs  # 布尔反转 → 可见性
-│   └── CountToVisibilityConverter.cs         # 集合计数 → 可见性（支持 Invert）
+│   ├── IndexToBrushConverter.cs             # 索引 → 服务商配色画刷
+│   ├── InvertedBoolToVisibilityConverter.cs # 布尔反转 → 可见性
+│   └── CountToVisibilityConverter.cs        # 集合计数 → 可见性（支持 Invert）
 ├── Services/                     # 服务层（接口 + 实现）
-│   ├── IConfigService / ConfigService            # JSON 配置读写（原子写入 + 锁）
+│   ├── IConfigService / ConfigService                # JSON 配置读写（原子写入 + 锁）
 │   ├── IModelResolverService / ModelResolverService  # 模型槽位映射
 │   ├── IProxyServerService / ProxyServerService      # Kestrel 代理服务器
-│   └── IClaudeDesktopService / ClaudeDesktopService  # Claude Desktop 配置 + 重启
+│   ├── IClaudeDesktopService / ClaudeDesktopService  # Claude Desktop 配置 + 智能重启
+│   └── INotificationService / NotificationService    # UI 通知抽象（Growl 封装）
 ├── Resources/                    # XAML 资源
 │   └── Styles.xaml               # 设计体系（色彩、圆角、按钮、卡片、排版）
 ├── Helpers/                      # 工具类
+│   ├── Constants.cs              # 全局共享常量（端口、版本号、URL）
 │   ├── FileSystemHelper.cs       # 原子写入（临时文件 + 重命名）
 │   ├── AutoStartHelper.cs        # 注册表开机自启动
 │   └── TimeHelper.cs             # 时间格式化

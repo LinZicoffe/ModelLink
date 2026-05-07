@@ -1,6 +1,5 @@
 using System.IO;
 using System.Windows;
-using System.Windows.Threading;
 using claude_model_setting.Services;
 using claude_model_setting.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -81,6 +80,7 @@ public partial class App : Application
         services.AddSingleton<IModelResolverService, ModelResolverService>();
         services.AddSingleton<IProxyServerService, ProxyServerService>();
         services.AddSingleton<IClaudeDesktopService, ClaudeDesktopService>();
+        services.AddSingleton<INotificationService, NotificationService>();
 
         // ViewModel
         services.AddTransient<MainViewModel>();

@@ -28,26 +28,6 @@ public static class FileSystemHelper
     }
 
     /// <summary>
-    /// 同步版本的带重试写入
-    /// </summary>
-    public static void WriteWithRetry(string path, string content, int maxRetries = 3)
-    {
-        for (var attempt = 0; attempt < maxRetries; attempt++)
-        {
-            try
-            {
-                File.WriteAllText(path, content);
-                return;
-            }
-            catch (IOException ex) when (IsFileLocked(ex) && attempt < maxRetries - 1)
-            {
-                Serilog.Log.Warning("[写入] 文件被锁定，1 秒后重试... {Path}", path);
-                Thread.Sleep(1000);
-            }
-        }
-    }
-
-    /// <summary>
     /// 原子写入：先写临时文件，再重命名
     /// </summary>
     public static async Task AtomicWriteAsync(string targetPath, string content)

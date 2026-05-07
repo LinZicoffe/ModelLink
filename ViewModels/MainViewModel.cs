@@ -14,6 +14,8 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly IConfigService _configService;
     private readonly IClaudeDesktopService _claudeDesktopService;
+    private readonly IProxyServerService _proxyServerService;
+    private readonly INotificationService _notificationService;
 
     [ObservableProperty]
     private bool _isServerRunning;
@@ -45,10 +47,13 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(
         IConfigService configService,
         IClaudeDesktopService claudeDesktopService,
-        IProxyServerService proxyServerService)
+        IProxyServerService proxyServerService,
+        INotificationService notificationService)
     {
         _configService = configService;
         _claudeDesktopService = claudeDesktopService;
+        _proxyServerService = proxyServerService;
+        _notificationService = notificationService;
         IsServerRunning = true;
         IsAutoStartEnabled = Helpers.AutoStartHelper.IsEnabled();
         LoadConfig();
@@ -95,6 +100,12 @@ public sealed partial class MainViewModel : ObservableObject
         Providers.Add(new ProviderViewModel());
     }
 
+    [RelayCommand]
+    private void DeleteProvider(ProviderViewModel provider)
+    {
+        Providers.Remove(provider);
+    }
+
     /// <summary>
     /// 托盘点击显示窗口
     /// </summary>
@@ -122,11 +133,11 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var config = BuildConfig();
             await _configService.SaveConfigAsync(config);
-            HandyControl.Controls.Growl.Success("配置已保存");
+            _notificationService.Success("配置已保存");
         }
         catch (Exception ex)
         {
-            HandyControl.Controls.Growl.Error($"保存失败: {ex.Message}");
+            _notificationService.Error($"保存失败: {ex.Message}");
             Log.Error(ex, "保存配置失败");
         }
         finally
@@ -145,11 +156,11 @@ public sealed partial class MainViewModel : ObservableObject
             var config = BuildConfig();
             await _configService.SaveConfigAsync(config);
             var msg = await _claudeDesktopService.ApplyToClaudeDesktopAsync();
-            HandyControl.Controls.Growl.Success(msg);
+            _notificationService.Success(msg);
         }
         catch (Exception ex)
         {
-            HandyControl.Controls.Growl.Error($"应用失败: {ex.Message}");
+            _notificationService.Error($"应用失败: {ex.Message}");
             Log.Error(ex, "应用到 Claude Desktop 失败");
         }
         finally
@@ -161,11 +172,8 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void RefreshLogs()
     {
-        var proxyService = App.Services.GetService(typeof(IProxyServerService)) as IProxyServerService;
-        if (proxyService == null) return;
-
         Logs.Clear();
-        foreach (var log in proxyService.GetLogs())
+        foreach (var log in _proxyServerService.GetLogs())
         {
             Logs.Add(log);
         }
