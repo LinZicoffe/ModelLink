@@ -186,3 +186,5 @@ dotnet publish "claude model setting/claude model setting.csproj" -c Release -r 
 - **署名**：使用时须保留原作者信息
 - **非商业性使用**：不得用于任何商业目的
 - **禁止演绎**：不得修改后再分发（防止去除水印后转卖）
+
+本软件基于 **抖音 Winhao学AI** 的原版 ModelLink 功能复刻。
