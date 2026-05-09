@@ -81,6 +81,8 @@ public partial class App : Application
         services.AddSingleton<IProxyServerService, ProxyServerService>();
         services.AddSingleton<IClaudeDesktopService, ClaudeDesktopService>();
         services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<IBackupService, BackupService>();
+        services.AddSingleton<ILocalizationService, LocalizationService>();
 
         // ViewModel
         services.AddTransient<MainViewModel>();

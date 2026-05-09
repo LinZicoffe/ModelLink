@@ -20,8 +20,9 @@
 - 将第三方模型（DeepSeek、Kimi、智谱 GLM 等）接入 Claude Desktop
 - 支持同时配置多个 API 服务商，每个服务商独立配色标识
 - 支持 1M 上下文模型变体
+- **Claude Desktop 一键汉化**：将界面切换为中文，支持汉化和恢复
 - 原生 WPF 界面（HandyControl），无需 WebView 运行时
-- 顶部 Tab 导航（服务商管理 / 系统设置 / 请求日志）
+- 顶部 Tab 导航（服务商管理 / 系统设置 / 请求日志 / 界面汉化）
 - 连接测试（延迟检测 + 错误信息提取）
 - SSE 流式转发，零缓冲实时响应
 - 系统托盘常驻，关闭窗口后代理继续运行
@@ -45,9 +46,10 @@
 
 采用顶部 Tab 导航布局，自定义标题栏可拖动：
 
-- **顶部栏**：品牌 Logo + Tab 导航（服务商管理 / 系统设置 / 请求日志）+ 运行状态指示
+- **顶部栏**：品牌 Logo + Tab 导航（服务商管理 / 系统设置 / 请求日志 / 界面汉化）+ 运行状态指示
 - **服务商卡片**：顶部彩色条标识，6 色自动循环（橙/蓝/绿/紫/金/青）
 - **模型行**：带图标的输入行，支持 1M 变体开关
+- **界面汉化**：检测 Claude Desktop 安装状态，一键汉化/恢复，自动备份原始文件
 - **空状态**：图标 + 引导文案 + 操作按钮
 - **底部操作栏**：保存配置（幽灵按钮）+ 应用到 Claude Desktop（品牌色主按钮）
 
@@ -65,13 +67,16 @@ claude model setting/
 │   ├── LogEntry.cs               # 请求日志
 │   ├── ModelSlot.cs              # 8 个 Claude 模型槽位
 │   ├── ResolvedModel.cs          # 解析后的目标模型
-│   └── ApiResponse.cs            # API 响应封装
+│   ├── ApiResponse.cs            # API 响应封装
+│   ├── ClaudeInstallation.cs     # Claude Desktop 安装信息（路径、版本、安装类型）
+│   └── PatchStatus.cs            # 汉化状态枚举（NotInstalled/Unpatched/Patched）
 ├── ViewModels/                   # MVVM ViewModel
-│   ├── MainViewModel.cs          # 主 VM（Tab 导航、配置 CRUD、日志）
+│   ├── MainViewModel.cs          # 主 VM（Tab 导航、配置 CRUD、日志、汉化）
 │   ├── ProviderViewModel.cs      # 服务商 VM（连接测试、模型管理）
-│   └── ModelEntryViewModel.cs    # 模型条目 VM（名称、1M 开关）
+│   ├── ModelEntryViewModel.cs    # 模型条目 VM（名称、1M 开关）
+│   └── LocalizationViewModel.cs  # 汉化 VM（安装检测、汉化/恢复操作、状态管理）
 ├── Views/                        # MVVM View
-│   └── MainWindow.xaml / .cs     # 主窗口（顶部 Tab + 三页内容）
+│   └── MainWindow.xaml / .cs     # 主窗口（顶部 Tab + 四页内容）
 ├── Converters/                   # WPF 值转换器
 │   ├── IndexToBrushConverter.cs             # 索引 → 服务商配色画刷
 │   ├── InvertedBoolToVisibilityConverter.cs # 布尔反转 → 可见性
@@ -81,14 +86,20 @@ claude model setting/
 │   ├── IModelResolverService / ModelResolverService  # 模型槽位映射
 │   ├── IProxyServerService / ProxyServerService      # Kestrel 代理服务器
 │   ├── IClaudeDesktopService / ClaudeDesktopService  # Claude Desktop 配置 + 智能重启
-│   └── INotificationService / NotificationService    # UI 通知抽象（Growl 封装）
-├── Resources/                    # XAML 资源
-│   └── Styles.xaml               # 设计体系（色彩、圆角、按钮、卡片、排版）
+│   ├── INotificationService / NotificationService    # UI 通知抽象（Growl 封装）
+│   ├── IBackupService / BackupService                # Claude Desktop 文件备份/还原
+│   └── ILocalizationService / LocalizationService    # Claude Desktop 汉化（检测、注入、恢复）
+├── Resources/                    # XAML 资源 + 嵌入式翻译
+│   ├── Styles.xaml               # 设计体系（色彩、圆角、按钮、卡片、排版）
+│   ├── zh-CN.json                # ion-dist/i18n 中文翻译
+│   ├── desktop-zh-CN.json        # resources/zh-CN.json 中文翻译
+│   └── statsig-zh-CN.json        # statsig 中文翻译
 ├── Helpers/                      # 工具类
 │   ├── Constants.cs              # 全局共享常量（端口、版本号、URL）
 │   ├── FileSystemHelper.cs       # 原子写入（临时文件 + 重命名）
 │   ├── AutoStartHelper.cs        # 注册表开机自启动
 │   └── TimeHelper.cs             # 时间格式化
+├── GenIcon.cs                    # 托盘图标生成工具（不参与编译）
 └── Assets/                       # 资源文件
     └── tray_icon.ico             # 系统托盘图标
 ```
@@ -129,7 +140,25 @@ dotnet run
 6. 点击「保存配置」
 7. 点击「应用到 Claude Desktop」
 
-### 第三步：开始使用
+### 第三步：界面汉化（可选）
+
+1. 切换到「界面汉化」Tab 页
+2. 程序自动检测 Claude Desktop 安装状态和汉化状态
+3. 需要以**管理员身份**运行 ModelLink 才能执行汉化
+4. 点击「一键汉化」执行汉化操作（自动备份原始文件）
+5. 如需恢复，点击「一键恢复」
+
+汉化流程：
+1. 关闭 Claude Desktop
+2. 获取文件权限（MSIX 安装目录需要提升权限）
+3. 备份原始 `index-*.js` 文件
+4. 写入翻译文件（zh-CN.json、desktop-zh-CN.json、statsig-zh-CN.json）
+5. 注入语言白名单到 index-*.js
+6. 设置语言配置（locale: zh-CN）
+7. 验证汉化结果
+8. 重启 Claude Desktop
+
+### 第四步：开始使用
 
 在 Claude Desktop 的模型选择器中选择配置的模型即可。
 
@@ -152,6 +181,7 @@ Claude Desktop → http://127.0.0.1:5678 (本地代理) → 第三方 API
 - 应用配置：`%USERPROFILE%\.claude-model-proxy\config.json`
 - 日志文件：`%USERPROFILE%\.claude-model-proxy\logs\`
 - Claude Desktop 配置：`%APPDATA%\Claude-3p\configLibrary\`
+- 汉化备份：`%LOCALAPPDATA%\ClaudeCN\backups\`
 
 ## 与原 Rust 版本的差异
 
@@ -163,6 +193,7 @@ Claude Desktop → http://127.0.0.1:5678 (本地代理) → 第三方 API
 | HTTP 客户端 | reqwest | HttpClient |
 | JSON | serde | System.Text.Json |
 | 系统托盘 | tray_icon crate | HandyControl NotifyIcon |
+| 汉化功能 | 无 | 一键汉化/恢复（支持 MSIX 和 EXE 安装） |
 | 运行时 | 无（单文件编译） | 需要 .NET 8.0 Runtime |
 
 ## 构建与打包

@@ -44,11 +44,17 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<ProviderViewModel> Providers { get; } = [];
     public ObservableCollection<LogEntry> Logs { get; } = [];
 
+    /// <summary>
+    /// 汉化功能 ViewModel
+    /// </summary>
+    public LocalizationViewModel LocalizationViewModel { get; }
+
     public MainViewModel(
         IConfigService configService,
         IClaudeDesktopService claudeDesktopService,
         IProxyServerService proxyServerService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        ILocalizationService localizationService)
     {
         _configService = configService;
         _claudeDesktopService = claudeDesktopService;
@@ -56,6 +62,7 @@ public sealed partial class MainViewModel : ObservableObject
         _notificationService = notificationService;
         IsServerRunning = true;
         IsAutoStartEnabled = Helpers.AutoStartHelper.IsEnabled();
+        LocalizationViewModel = new LocalizationViewModel(localizationService);
         LoadConfig();
     }
 

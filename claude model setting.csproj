@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\tray_icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +20,22 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <Resource Include="Assets\tray_icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\zh-CN.json" />
+    <EmbeddedResource Include="Resources\desktop-zh-CN.json" />
+    <EmbeddedResource Include="Resources\statsig-zh-CN.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="GenIcon.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\tray_icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

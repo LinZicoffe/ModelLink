@@ -157,6 +157,10 @@
                                          Content="请求日志" Tag="&#xE9D9;"
                                          Style="{StaticResource TabButtonStyle}"
                                          Checked="TabLogs_Checked"/>
+                            <RadioButton x:Name="TabLocalization" GroupName="NavTab"
+                                         Content="界面汉化" Tag="&#xE7F4;"
+                                         Style="{StaticResource TabButtonStyle}"
+                                         Checked="TabLocalization_Checked"/>
                         </StackPanel>
                     </Border>
 
@@ -954,6 +958,197 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                        </StackPanel>
+                    </hc:ScrollViewer>
+                </DockPanel>
+
+                <!-- ======== 页面 3: 界面汉化 ======== -->
+                <DockPanel x:Name="PageLocalization" Visibility="Collapsed"
+                           RenderTransformOrigin="0.5,0.5">
+                    <DockPanel.RenderTransform>
+                        <TranslateTransform Y="0"/>
+                    </DockPanel.RenderTransform>
+
+                    <!-- 底部操作栏（与 PageProviders 一致） -->
+                    <Border DockPanel.Dock="Bottom" Style="{StaticResource BottomBar}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="{Binding LocalizationViewModel.PatchButtonText}"
+                                    Command="{Binding LocalizationViewModel.ApplyPatchCommand}"
+                                    Style="{StaticResource ButtonPrimary}"
+                                    Width="160" Height="42" Margin="0,0,12,0"/>
+                            <Button Content="一键恢复"
+                                    Command="{Binding LocalizationViewModel.RemovePatchCommand}"
+                                    Style="{StaticResource ButtonGhost}"
+                                    Width="160" Height="40" Margin="0,0,12,0"/>
+                            <Button Content="刷新状态"
+                                    Command="{Binding LocalizationViewModel.RefreshStatusCommand}"
+                                    Style="{StaticResource ButtonSmall}"/>
+                            <hc:LoadingCircle Width="18" Height="18" Margin="8,0,0,0"
+                                              Visibility="{Binding LocalizationViewModel.IsProcessing, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 滚动内容 -->
+                    <hc:ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="32,28,32,32" MaxWidth="820" HorizontalAlignment="Center">
+
+                            <!-- 页面标题 -->
+                            <DockPanel Margin="0,0,0,24">
+                                <StackPanel>
+                                    <TextBlock Text="界面汉化" Style="{StaticResource PageTitle}"/>
+                                    <TextBlock Text="一键将 Claude Desktop 切换为中文界面，支持汉化和恢复"
+                                               Style="{StaticResource DescText}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </DockPanel>
+
+                            <!-- 卡片 1: 安装状态 -->
+                            <hc:Card Style="{StaticResource GroupCard}">
+                                <StackPanel Margin="22">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                                        <Border Width="34" Height="34" CornerRadius="9"
+                                                Background="#EFF6FF" Margin="0,0,12,0">
+                                            <TextBlock Text="&#xE960;" FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="16" Foreground="#3B82F6"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="安装状态" Style="{StaticResource SectionTitle}"/>
+                                            <TextBlock Text="检测 Claude Desktop 的安装情况"
+                                                       Style="{StaticResource DescText}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Border Background="#FAFBFC" CornerRadius="10" Padding="16,14"
+                                            BorderBrush="#EEF0F3" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Fill" Value="#9CA3AF"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LocalizationViewModel.IsInstalled}" Value="True">
+                                                                <Setter Property="Fill" Value="#22C55E"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <TextBlock FontSize="14" FontWeight="Medium" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="#9CA3AF"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LocalizationViewModel.IsInstalled}" Value="True">
+                                                                <Setter Property="Foreground" Value="#15803D"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                                <TextBlock.Inlines>
+                                                    <Run>
+                                                        <Run.Style>
+                                                            <Style TargetType="Run">
+                                                                <Setter Property="Text" Value="未检测到 Claude Desktop"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding LocalizationViewModel.IsInstalled}" Value="True">
+                                                                        <Setter Property="Text" Value="已检测到"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Run.Style>
+                                                    </Run>
+                                                    <Run Text="{Binding LocalizationViewModel.ClaudeVersion, Mode=OneWay, TargetNullValue=''}"
+                                                         FontWeight="SemiBold" Foreground="#D97757"/>
+                                                </TextBlock.Inlines>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </hc:Card>
+
+                            <!-- 卡片 2: 汉化状态 -->
+                            <hc:Card Style="{StaticResource GroupCard}">
+                                <StackPanel Margin="22">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                                        <Border Width="34" Height="34" CornerRadius="9"
+                                                Background="#FFF7ED" Margin="0,0,12,0">
+                                            <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="16" Foreground="#D97757"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="汉化状态" Style="{StaticResource SectionTitle}"/>
+                                            <TextBlock Text="当前 Claude Desktop 的汉化情况"
+                                                       Style="{StaticResource DescText}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Border Background="#FAFBFC" CornerRadius="10" Padding="16,14"
+                                            BorderBrush="#EEF0F3" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Fill" Value="#9CA3AF"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LocalizationViewModel.PatchStatus}" Value="1">
+                                                                <Setter Property="Fill" Value="#F59E0B"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding LocalizationViewModel.PatchStatus}" Value="2">
+                                                                <Setter Property="Fill" Value="#22C55E"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <TextBlock FontSize="14" FontWeight="Medium" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="未安装"/>
+                                                        <Setter Property="Foreground" Value="#9CA3AF"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LocalizationViewModel.PatchStatus}" Value="1">
+                                                                <Setter Property="Text" Value="未汉化"/>
+                                                                <Setter Property="Foreground" Value="#B45309"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding LocalizationViewModel.PatchStatus}" Value="2">
+                                                                <Setter Property="Text" Value="已汉化"/>
+                                                                <Setter Property="Foreground" Value="#15803D"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </hc:Card>
+
+                            <!-- 管理员权限警告 -->
+                            <Border CornerRadius="10" Padding="16,14" Margin="0,0,0,20"
+                                    Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1"
+                                    Visibility="{Binding LocalizationViewModel.IsAdmin, Converter={StaticResource InvBoolToVis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                               Foreground="#EF4444" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Text="请右键以管理员身份运行本程序" FontSize="13" FontWeight="Medium"
+                                               Foreground="#B91C1C" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 处理状态信息 -->
+                            <Border Background="#FAFBFC" CornerRadius="10" Padding="16,12" Margin="0,0,0,20"
+                                    BorderBrush="#EEF0F3" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="状态：" FontSize="13" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                    <hc:LoadingCircle Width="14" Height="14" Margin="0,0,8,0"
+                                                      Visibility="{Binding LocalizationViewModel.IsProcessing, Converter={StaticResource BoolToVis}}"/>
+                                    <TextBlock Text="{Binding LocalizationViewModel.StatusMessage}"
+                                               FontSize="13" Foreground="#374151" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 底部信息 -->
+                            <TextBlock Text="原项目：Winhao学AI（抖音号：54927876676）· 本软件完全免费"
+                                       FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </hc:ScrollViewer>
                 </DockPanel>

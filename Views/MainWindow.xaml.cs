@@ -50,6 +50,7 @@ public partial class MainWindow : HandyControl.Controls.Window
         PageProviders.Visibility = Visibility.Visible;
         PageSettings.Visibility = Visibility.Collapsed;
         PageLogs.Visibility = Visibility.Collapsed;
+        PageLocalization.Visibility = Visibility.Collapsed;
         PlayPageEnter(PageProviders);
     }
 
@@ -62,6 +63,7 @@ public partial class MainWindow : HandyControl.Controls.Window
         PageProviders.Visibility = Visibility.Collapsed;
         PageSettings.Visibility = Visibility.Visible;
         PageLogs.Visibility = Visibility.Collapsed;
+        PageLocalization.Visibility = Visibility.Collapsed;
         PlayPageEnter(PageSettings);
     }
 
@@ -74,10 +76,24 @@ public partial class MainWindow : HandyControl.Controls.Window
         PageProviders.Visibility = Visibility.Collapsed;
         PageSettings.Visibility = Visibility.Collapsed;
         PageLogs.Visibility = Visibility.Visible;
+        PageLocalization.Visibility = Visibility.Collapsed;
         PlayPageEnter(PageLogs);
 
         if (DataContext is MainViewModel vm)
             vm.RefreshLogsCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// Tab 切换：界面汉化
+    /// </summary>
+    private void TabLocalization_Checked(object sender, RoutedEventArgs e)
+    {
+        if (PageLocalization == null) return;
+        PageProviders.Visibility = Visibility.Collapsed;
+        PageSettings.Visibility = Visibility.Collapsed;
+        PageLogs.Visibility = Visibility.Collapsed;
+        PageLocalization.Visibility = Visibility.Visible;
+        PlayPageEnter(PageLocalization);
     }
 
     /// <summary>
